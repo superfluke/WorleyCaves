@@ -1,0 +1,63 @@
+*.class
+*.classpath
+*.project
+/.gradle
+/.settings
+/.idea
+*.iml
+*.ipr
+*.iws
+/.metadata/*
+*.eml
+/run/
+usernamecache.json
+*.stackdump
+*.log
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+/bin
+/out
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+run/
+
+eclipse/
+
+bin/
+
+\.settings/
+
+\.gradle/
+
+*.launch
+
+README\.txt
+
+hex\.todo
+
+LICENSE-new\.txt
+
+forge-1\.12\.2-14\.23\.3\.2655-changelog\.txt
+
+CREDITS-fml\.txt
+
+\.project
+
+\.classpath
+
+MinecraftForge-Credits\.txt
+
+Paulscode IBXM Library License\.txt
+
+Paulscode SoundSystem CodecIBXM License\.txt
+
+/build
+/run
