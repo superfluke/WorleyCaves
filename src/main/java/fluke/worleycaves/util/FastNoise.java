@@ -37,7 +37,7 @@ public class FastNoise {
 	public enum Interp {Linear, Hermite, Quintic}
 	public enum FractalType {FBM, Billow, RigidMulti}
 	public enum CellularDistanceFunction {Euclidean, Manhattan, Natural}
-	public enum CellularReturnType {CellValue, NoiseLookup, Distance, Distance2, Distance2Add, Distance2Sub, Distance2Mul, Distance2Div}
+	public enum CellularReturnType {CellValue, NoiseLookup, Distance, Distance2, Distance2Add1, Distance2Sub1, Distance2Mul1, Distance1Div2, Distance3, Distance3Add1, Distance3Sub1, Distance3Mul1, Distance1Div3, Distance3Add2, Distance3Sub2, Distance3Mul2, Distance2Div3}
 
 	private int m_seed = 1337;
 	private float m_frequency = (float) 0.01;
@@ -1799,7 +1799,7 @@ public class FastNoise {
 				return 0;
 		}
 	}
-
+	
 	private float SingleCellular2Edge(float x, float y, float z) {
 		int xr = FastRound(x);
 		int yr = FastRound(y);
@@ -1820,7 +1820,7 @@ public class FastNoise {
 							float vecZ = zi - z + vec.z;
 
 							float newDistance = vecX * vecX + vecY * vecY + vecZ * vecZ;
-
+							
 							distance2 = Math.max(Math.min(distance2, newDistance), distance);
 							distance = Math.min(distance, newDistance);
 						}
@@ -1870,14 +1870,117 @@ public class FastNoise {
 		switch (m_cellularReturnType) {
 			case Distance2:
 				return distance2 - 1;
-			case Distance2Add:
+			case Distance2Add1:
 				return distance2 + distance - 1;
-			case Distance2Sub:
+			case Distance2Sub1:
 				return distance2 - distance - 1;
-			case Distance2Mul:
+			case Distance2Mul1:
 				return distance2 * distance - 1;
-			case Distance2Div:
+			case Distance1Div2:
 				return distance / distance2 - 1;
+			default:
+				return 0;
+		}
+	}
+	
+	//Modified version of "SingleCellular2Edge(x, y, z)" from FastNoise
+	//Adds the third distance value for use
+	//This is not fully implemented in FastNoise and is called externally directly for this prototype, hence the public modifier
+	//TODO Implement fully or separate out as it's own utility
+	public float SingleCellular3Edge(float x, float y, float z) {
+		x *= m_frequency;
+		y *= m_frequency;
+		z *= m_frequency;
+		
+		int xr = FastRound(x);
+		int yr = FastRound(y);
+		int zr = FastRound(z);
+
+		float distance1 = 999999;
+		float distance2 = 999999;
+		float distance3 = 999999;
+
+		switch (m_cellularDistanceFunction) {
+			case Euclidean:
+				for (int xi = xr - 1; xi <= xr + 1; xi++) {
+					for (int yi = yr - 1; yi <= yr + 1; yi++) {
+						for (int zi = zr - 1; zi <= zr + 1; zi++) {
+							Float3 vec = CELL_3D[Hash3D(m_seed, xi, yi, zi) & 255];
+
+							float vecX = xi - x + vec.x;
+							float vecY = yi - y + vec.y;
+							float vecZ = zi - z + vec.z;
+
+							float newDistance = vecX * vecX + vecY * vecY + vecZ * vecZ;
+							
+							distance3 = Math.max(Math.min(distance3, newDistance), distance2);
+							distance2 = Math.max(Math.min(distance2, newDistance), distance1);
+							distance1 = Math.min(distance1, newDistance);
+						}
+					}
+				}
+				break;
+			case Manhattan:
+				for (int xi = xr - 1; xi <= xr + 1; xi++) {
+					for (int yi = yr - 1; yi <= yr + 1; yi++) {
+						for (int zi = zr - 1; zi <= zr + 1; zi++) {
+							Float3 vec = CELL_3D[Hash3D(m_seed, xi, yi, zi) & 255];
+
+							float vecX = xi - x + vec.x;
+							float vecY = yi - y + vec.y;
+							float vecZ = zi - z + vec.z;
+
+							float newDistance = Math.abs(vecX) + Math.abs(vecY) + Math.abs(vecZ);
+
+							distance3 = Math.max(Math.min(distance3, newDistance), distance2);
+							distance2 = Math.max(Math.min(distance2, newDistance), distance1);
+							distance1 = Math.min(distance1, newDistance);
+						}
+					}
+				}
+				break;
+			case Natural:
+				for (int xi = xr - 1; xi <= xr + 1; xi++) {
+					for (int yi = yr - 1; yi <= yr + 1; yi++) {
+						for (int zi = zr - 1; zi <= zr + 1; zi++) {
+							Float3 vec = CELL_3D[Hash3D(m_seed, xi, yi, zi) & 255];
+
+							float vecX = xi - x + vec.x;
+							float vecY = yi - y + vec.y;
+							float vecZ = zi - z + vec.z;
+
+							float newDistance = (Math.abs(vecX) + Math.abs(vecY) + Math.abs(vecZ)) + (vecX * vecX + vecY * vecY + vecZ * vecZ);
+
+							distance3 = Math.max(Math.min(distance3, newDistance), distance2);
+							distance2 = Math.max(Math.min(distance2, newDistance), distance1);
+							distance1 = Math.min(distance1, newDistance);
+						}
+					}
+				}
+				break;
+			default:
+				break;
+		}
+
+		switch (m_cellularReturnType) {
+			case Distance3:
+				return distance3 - 1;
+			case Distance3Add1:
+				return distance3 + distance1 - 1;
+			case Distance3Sub1:
+				return distance3 - distance1 - 1;
+			case Distance3Mul1:
+				return distance3 * distance1 - 1;
+			case Distance1Div3:
+				return distance1 / distance3 - 1;
+			case Distance3Add2:
+				return distance3 + distance2 - 1;
+			case Distance3Sub2:
+				return distance3 - distance2 - 1;
+			case Distance3Mul2:
+				return distance3 * distance2 - 1;
+			case Distance2Div3:
+				return distance2 / distance3 - 1;
 			default:
 				return 0;
 		}
@@ -2036,13 +2139,13 @@ public class FastNoise {
 		switch (m_cellularReturnType) {
 			case Distance2:
 				return distance2 - 1;
-			case Distance2Add:
+			case Distance2Add1:
 				return distance2 + distance - 1;
-			case Distance2Sub:
+			case Distance2Sub1:
 				return distance2 - distance - 1;
-			case Distance2Mul:
+			case Distance2Mul1:
 				return distance2 * distance - 1;
-			case Distance2Div:
+			case Distance1Div2:
 				return distance / distance2 - 1;
 			default:
 				return 0;
