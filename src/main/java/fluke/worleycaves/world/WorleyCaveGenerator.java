@@ -60,18 +60,18 @@ public class WorleyCaveGenerator extends MapGenBase
 //						System.out.println(funAdjuster);
 //						worleyF1divF3.SetFrequency(0.016f + funAdjuster);
 						cutoff = -0.18f + funAdjuster;
-						float dispAmp = 7.0f;
+						float dispAmp = 8.0f;
 						
 						//Experiment making the cave system more chaotic the more you descend 
-//						dispAmp = 0.3f * (maxHeight-y);
+						dispAmp *= ((maxHeight-y)/(maxHeight*0.7));
 						
 						float xDisp = 0f;
 						float yDisp = 0f;
 						float zDisp = 0f;
 						
-//						xDisp = perlin.GetNoise(realX, y, realZ)*dispAmp;
-//						yDisp = perlin.GetNoise(realX, y-256.0f, realZ)*dispAmp;
-//						zDisp = perlin.GetNoise(realX, y-512.0f, realZ)*dispAmp;
+						xDisp = perlin.GetNoise(realX, y, realZ)*dispAmp;
+						yDisp = perlin.GetNoise(realX, y-256.0f, realZ)*dispAmp;
+						zDisp = perlin.GetNoise(realX, y-512.0f, realZ)*dispAmp;
 						
 						//Different experiment for displacement
 //						float dispAmpNoise = perlin.GetNoise(realX, y, realZ) * dispAmp;
