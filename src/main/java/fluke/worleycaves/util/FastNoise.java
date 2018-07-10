@@ -67,7 +67,7 @@ public class FastNoise {
 	private CellularDistanceFunction m_cellularDistanceFunction = CellularDistanceFunction.Euclidean;
 	private CellularReturnType m_cellularReturnType = CellularReturnType.CellValue;
 	private FastNoise m_cellularNoiseLookup = null;
-	private float m_cellularJitter = 0.45f;
+	private float m_cellularJitter = 1.0f;
 
 	private float m_gradientPerturbAmp = (float) (1.0 / 0.45);
 
