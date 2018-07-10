@@ -74,7 +74,7 @@ public class WorleyCaveGenerator extends MapGenBase
 			//each chunk divided into 4 subchunks along Z axis
 			for (int z=0; z<4; z++)
 			{
-				//each chunk divided into 32 subchunks along Y axis
+				//each chunk divided into 64 subchunks along Y axis. Need lots of y sample points to not break things
 				for(int y = 0; y < 64; y++)
 				{
 					//grab the 8 sample points needed from the noise values
@@ -100,7 +100,7 @@ public class WorleyCaveGenerator extends MapGenBase
                     float noiseEndX0 = x1y0z0;
                     float noiseEndX1 = x1y0z1;
                     
-                    // loop through 4 blocks of the Y subchunk
+                    // loop through 2 blocks of the Y subchunk
                     for (int suby = 0; suby < 2; suby++)
                     {
                     	int localY = suby + y*2;
