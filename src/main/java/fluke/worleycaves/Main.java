@@ -1,6 +1,9 @@
 package fluke.worleycaves;
 
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import fluke.worleycaves.proxy.CommonProxy;
 import fluke.worleycaves.util.Reference;
 import fluke.worleycaves.world.WorldTypeATest;
@@ -17,6 +20,7 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 public class Main 
 {
 	public static WorldTypeATest aTest;
+	public static final Logger LOGGER = LogManager.getLogger(Reference.MOD_ID);
 	
 	@Instance
 	public static Main instance;
