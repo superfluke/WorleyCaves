@@ -74,6 +74,10 @@ public class WorleyCaveGenerator extends MapGenBase
 
 	protected void recursiveGenerate(World worldIn, int chunkX, int chunkZ, int originalX, int originalZ, ChunkPrimer chunkPrimerIn)
     {
+		//TODO
+		//this line used to be here:
+		//if (chunkX == originalX && chunkZ == originalZ)
+		//make sure this isnt generating the same chunk 100 times
 		float[][][] samples = sampleNoise(chunkX, chunkZ);
 		float oneEighth = 0.125F;
         float oneQuarter = 0.25F;
@@ -163,10 +167,6 @@ public class WorleyCaveGenerator extends MapGenBase
 	            						}
 	            						//Diggy diggy hole
 	            						chunkPrimerIn.setBlockState(localX, localY, localZ, holeFiller);
-	            						
-	            						//Give some headroom for the player
-	            						chunkPrimerIn.setBlockState(localX, localY+1, localZ, holeFiller); //TODO fix this. bypasses the isDigable check
-	//            						chunkPrimerIn.setBlockState(localX, localY+2, localZ, Blocks.AIR.getDefaultState());
             						}
             					}
                                 
@@ -197,11 +197,14 @@ public class WorleyCaveGenerator extends MapGenBase
 			for (int z=0; z<5; z++)
 			{
 				int realZ = z*4 + chunkZ*16;
-				for(int y=0; y<65; y++)
+				
+				//loop from top down for y values so we can adjust noise above current y later on
+				for(int y=64; y>=0; y--)
 				{
 					int realY = y*2;
 					
 					//Experiment making the cave system more chaotic the more you descend 
+					//TODO might be too dramatic down at lava level
 					float dispAmp = (float) (warpAmplifier * ((maxHeight-y)/(maxHeight*0.7)));
 					
 					float xDisp = 0f;
@@ -220,18 +223,26 @@ public class WorleyCaveGenerator extends MapGenBase
 					{
 						//if noise is below cutoff, adjust values of neighbors
 						//helps prevent caves fracturing during interpolation
+						
 						if(x > 0)
 							noiseSamples[x-1][y][z] = (noise * 0.2f) + (noiseSamples[x-1][y][z] * 0.8f);
-						if(y > 0)
-						{
-
-							float noiseAbove = noiseSamples[x][y-1][z];
-							noiseSamples[x][y-1][z] = (noise + noiseAbove)/2;
-//							if(noise < noiseAbove)
-//								noiseSamples[x][y-1][z] = noise;
-						}
 						if(z > 0)
 							noiseSamples[x][y][z-1] = (noise * 0.2f) + (noiseSamples[x][y][z-1] * 0.8f);
+						
+						//more heavily adjust y above 'air block' noise values to give players more headroom
+						if(y < 64)
+						{
+							float noiseAbove = noiseSamples[x][y+1][z];
+							if(noise > noiseAbove)
+								noiseSamples[x][y+1][z] = (noise * 0.8F) + (noiseAbove * 0.2F);
+							if(y < 63)
+							{
+								float noiseTwoAbove = noiseSamples[x][y+2][z];
+								if(noise > noiseTwoAbove)
+									noiseSamples[x][y+2][z] = (noise * 0.35F) + (noiseTwoAbove * 0.65F);
+							}
+						}
+						
 					}
 				}
 			}
