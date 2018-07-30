@@ -93,7 +93,8 @@ public class WorleyCaveGenerator extends MapGenBase
 			for (int z=0; z<4; z++)
 			{
 				//each chunk divided into 64 subchunks along Y axis. Need lots of y sample points to not break things
-				for(int y = 0; y < 64; y++)
+				int depth[][] = new int[4][4];
+				for(int y = 63; y >= 0; y--)
 				{
 					//grab the 8 sample points needed from the noise values
 					float x0y0z0 = samples[x][y][z];
@@ -107,10 +108,10 @@ public class WorleyCaveGenerator extends MapGenBase
                     
                     //how much to increment noise along y value
                     //linear interpolation from start y and end y
-                    float noiseStepY00 = (x0y1z0 - x0y0z0) * oneHalf;
-                    float noiseStepY01 = (x0y1z1 - x0y0z1) * oneHalf;
-                    float noiseStepY10 = (x1y1z0 - x1y0z0) * oneHalf;
-                    float noiseStepY11 = (x1y1z1 - x1y0z1) * oneHalf;
+                    float noiseStepY00 = (x0y1z0 - x0y0z0) * -oneHalf;
+                    float noiseStepY01 = (x0y1z1 - x0y0z1) * -oneHalf;
+                    float noiseStepY10 = (x1y1z0 - x1y0z0) * -oneHalf;
+                    float noiseStepY11 = (x1y1z1 - x1y0z1) * -oneHalf;
                     
                     //noise values of 4 corners at y=0
                     float noiseStartX0 = x0y0z0;
@@ -119,7 +120,7 @@ public class WorleyCaveGenerator extends MapGenBase
                     float noiseEndX1 = x1y0z1;
                     
                     // loop through 2 blocks of the Y subchunk
-                    for (int suby = 0; suby < 2; suby++)
+                    for (int suby = 1; suby >= 0; suby--)
                     {
                     	int localY = suby + y*2;
                         float noiseStartZ = noiseStartX0;
@@ -146,10 +147,31 @@ public class WorleyCaveGenerator extends MapGenBase
                             {
                             	int localZ = subz + z*4;
                             	int realZ = localZ + chunkZ*16;
+                            	
+                            	if(depth[subx][subz] == 0)
+                            	{
+                            		IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
+            						if(currentBlock != AIR) {
+            							depth[subx][subz]++;
+            						}
+            						else
+            						{
+            							continue;
+            						}
+                            	}
+                            	else
+                            	{
+                            		depth[subx][subz]++;
+                            	}
 //                            	float cutoffAdjuster = (2 * perlin.GetNoise(realX-2, localY+256.0f, realZ/2))/10;
 //            					noiseCutoff = -0.18f + cutoffAdjuster;
 
-
+                            	//TODO Smooth in the caves instead of sudden cutoff
+                            	if(depth[subx][subz] < 10)
+                            	{
+                            		continue;
+                            	}
+                            	
             					if (noiseVal > noiseCutoff)
             					{
             						IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
