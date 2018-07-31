@@ -9,6 +9,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.MapGenBase;
@@ -17,6 +18,7 @@ public class WorleyCaveGenerator extends MapGenBase
 {
 	long[] genTime = new long[300];
 	int currentTimeIndex = 0;
+	double sum = 0;
 
 	private WorleyUtil worleyF1divF3 = new WorleyUtil();
 	private FastNoise perlin = new FastNoise();
@@ -29,6 +31,7 @@ public class WorleyCaveGenerator extends MapGenBase
 	private static int lavaDepth;
 	private static float noiseCutoff;
 	private static float warpAmplifier;
+	private static int easeInDepth;
 	
 	
 	public WorleyCaveGenerator()
@@ -44,6 +47,7 @@ public class WorleyCaveGenerator extends MapGenBase
 		lavaDepth = Configs.cavegen.lavaDepth;
 		noiseCutoff = (float) Configs.cavegen.noiseCutoffValue;
 		warpAmplifier = (float) Configs.cavegen.warpAmplifier;
+		easeInDepth = 15;
 	}
 	
 	private void debugValueAdjustments()
@@ -51,6 +55,7 @@ public class WorleyCaveGenerator extends MapGenBase
 		//lavaDepth = 10;
 		//noiseCutoff = 0.18F;
 		//warpAmplifier = 8.0F;
+		//easeInDepth = 15;
 	}
 	
 	@Override
@@ -64,20 +69,19 @@ public class WorleyCaveGenerator extends MapGenBase
 		this.recursiveGenerate(worldIn, x, z, x, z, primer);
 
 		genTime[currentTimeIndex] = System.currentTimeMillis() - millis;
-		System.out.println("chunk " + currentTimeIndex + ":" + genTime[currentTimeIndex]);
+//		System.out.println("chunk " + currentTimeIndex + ":" + genTime[currentTimeIndex]);
+		sum += genTime[currentTimeIndex];
 		currentTimeIndex++;
 		if (currentTimeIndex == genTime.length)
 		{
+			System.out.printf("300 chunk average: %.2f ms per chunk\n", sum/300.0);
+			sum = 0;
 			currentTimeIndex = 0;
 		}
 	}
 
 	protected void recursiveGenerate(World worldIn, int chunkX, int chunkZ, int originalX, int originalZ, ChunkPrimer chunkPrimerIn)
     {
-		//TODO
-		//this line used to be here:
-		//if (chunkX == originalX && chunkZ == originalZ)
-		//make sure this isnt generating the same chunk 100 times
 		float[][][] samples = sampleNoise(chunkX, chunkZ);
 		float oneEighth = 0.125F;
         float oneQuarter = 0.25F;
@@ -92,8 +96,8 @@ public class WorleyCaveGenerator extends MapGenBase
 			//each chunk divided into 4 subchunks along Z axis
 			for (int z=0; z<4; z++)
 			{
+				int depth = 0;
 				//each chunk divided into 64 subchunks along Y axis. Need lots of y sample points to not break things
-				int depth[][] = new int[4][4];
 				for(int y = 63; y >= 0; y--)
 				{
 					//grab the 8 sample points needed from the noise values
@@ -148,31 +152,42 @@ public class WorleyCaveGenerator extends MapGenBase
                             	int localZ = subz + z*4;
                             	int realZ = localZ + chunkZ*16;
                             	
-                            	if(depth[subx][subz] == 0)
+                            	if(depth == 0)
                             	{
-                            		IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
-            						if(currentBlock != AIR) {
-            							depth[subx][subz]++;
-            						}
+                            		//only checks depth once per 4x4 subchunk
+                            		if(subx == 0 && subz == 0)
+                            		{
+	                            		IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
+	                            		//use isDigable to skip leaves/wood getting counted as surface
+	            						if(isDigable(currentBlock, AIR)) 
+	            						{
+	            							depth++;
+	            						}
+                            		}
             						else
             						{
             							continue;
             						}
                             	}
-                            	else
+                            	else if(subx == 0 && subz == 0)
                             	{
-                            		depth[subx][subz]++;
+                            		//already hit surface, simply increment depth counter
+                            		depth++;
                             	}
+                            	
 //                            	float cutoffAdjuster = (2 * perlin.GetNoise(realX-2, localY+256.0f, realZ/2))/10;
 //            					noiseCutoff = -0.18f + cutoffAdjuster;
 
-                            	//TODO Smooth in the caves instead of sudden cutoff
-                            	if(depth[subx][subz] < 10)
+                            	float adjustedNoiseCutoff = noiseCutoff;
+                            	if(depth < easeInDepth)
                             	{
-                            		continue;
+                            		//higher threshold at surface, normal threshold below easeInDepth
+                            		//TODO test good value for surface cutoff
+                            		adjustedNoiseCutoff = (float) MathHelper.clampedLerp(noiseCutoff, noiseCutoff+Math.abs(noiseCutoff)*0.6, ((double)easeInDepth-(double)depth)/(double)easeInDepth);
+                            		//NOTE: this function might be slow as tits or my computer sucks. test this
                             	}
                             	
-            					if (noiseVal > noiseCutoff)
+            					if (noiseVal > adjustedNoiseCutoff)
             					{
             						IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
             						IBlockState aboveBlock = (IBlockState) MoreObjects.firstNonNull(chunkPrimerIn.getBlockState(localX, localY+1, localZ), Blocks.AIR.getDefaultState());
