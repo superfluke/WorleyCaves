@@ -13,6 +13,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.MapGenBase;
+import net.minecraft.world.gen.MapGenCaves;
 
 public class WorleyCaveGenerator extends MapGenBase
 {
@@ -23,6 +24,7 @@ public class WorleyCaveGenerator extends MapGenBase
 	private WorleyUtil worleyF1divF3 = new WorleyUtil();
 	private FastNoise perlin = new FastNoise();
 	private FastNoise perlin2 = new FastNoise();
+	private MapGenCaves vanillaCaveGen;
 	
 	private int maxHeight = 128;
 	
@@ -31,7 +33,7 @@ public class WorleyCaveGenerator extends MapGenBase
 	private static int lavaDepth;
 	private static float noiseCutoff;
 	private static float warpAmplifier;
-	private static int easeInDepth;
+	private static float easeInDepth;
 	
 	
 	public WorleyCaveGenerator()
@@ -47,7 +49,9 @@ public class WorleyCaveGenerator extends MapGenBase
 		lavaDepth = Configs.cavegen.lavaDepth;
 		noiseCutoff = (float) Configs.cavegen.noiseCutoffValue;
 		warpAmplifier = (float) Configs.cavegen.warpAmplifier;
-		easeInDepth = 15;
+		easeInDepth = (float) Configs.cavegen.easeInDepth;
+		
+		vanillaCaveGen = new MapGenCaves();
 	}
 	
 	private void debugValueAdjustments()
@@ -61,6 +65,18 @@ public class WorleyCaveGenerator extends MapGenBase
 	@Override
 	public void generate(World worldIn, int x, int z, ChunkPrimer primer)
 	{
+		
+		int currentDim = worldIn.provider.getDimension();
+		//revert to vanilla cave generation for blacklisted dims
+		for(int blacklistedDim: Configs.cavegen.blackListedDims)
+		{
+			if(currentDim == blacklistedDim)
+			{
+				this.vanillaCaveGen.generate(worldIn, x, z, primer);
+				return;
+			} 
+		}
+		
 		debugValueAdjustments();
 		
 		long millis = System.currentTimeMillis();
@@ -183,8 +199,9 @@ public class WorleyCaveGenerator extends MapGenBase
                             	{
                             		//higher threshold at surface, normal threshold below easeInDepth
                             		//TODO test good value for surface cutoff
-                            		adjustedNoiseCutoff = (float) MathHelper.clampedLerp(noiseCutoff, noiseCutoff+Math.abs(noiseCutoff)*0.6, ((double)easeInDepth-(double)depth)/(double)easeInDepth);
-                            		//NOTE: this function might be slow as tits or my computer sucks. test this
+                            		float surfaceNoiseCutoff = noiseCutoff+(Math.abs(noiseCutoff)*0.6F);
+                            		adjustedNoiseCutoff = (float) MathHelper.clampedLerp(noiseCutoff, surfaceNoiseCutoff, (easeInDepth-(float)depth)/easeInDepth);
+
                             	}
                             	
             					if (noiseVal > adjustedNoiseCutoff)
@@ -241,8 +258,8 @@ public class WorleyCaveGenerator extends MapGenBase
 					int realY = y*2;
 					
 					//Experiment making the cave system more chaotic the more you descend 
-					//TODO might be too dramatic down at lava level
-					float dispAmp = (float) (warpAmplifier * ((maxHeight-y)/(maxHeight*0.7)));
+					///TODO might be too dramatic down at lava level
+					float dispAmp = (float) (warpAmplifier * ((maxHeight-y)/(maxHeight*0.85)));
 					
 					float xDisp = 0f;
 					float yDisp = 0f;

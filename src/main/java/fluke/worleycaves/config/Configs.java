@@ -23,6 +23,14 @@ public class Configs
 		@Config.Comment({"Controls how much to warp caves. Lower values = straighter caves", "Default: 8.0"})
 		@Config.RequiresWorldRestart
 		public double warpAmplifier = 8.0;
+		
+		@Config.Comment({"Reduces number of caves at surface level, becoming more common until caves generate normally X number of blocks below the surface", "Default: 15"})
+		@Config.RequiresWorldRestart
+		public int easeInDepth = 15;
+		
+		@Config.Comment({"Dimension IDs that will use Vanilla cave generation rather than Worley's Caves", "Default:"})
+		@Config.RequiresWorldRestart
+		public int[] blackListedDims = {};
 	}
 
 }
