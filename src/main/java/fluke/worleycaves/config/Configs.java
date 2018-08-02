@@ -28,6 +28,10 @@ public class Configs
 		@Config.RequiresWorldRestart
 		public int easeInDepth = 15;
 		
+		@Config.Comment({"Squishes caves on the Y axis. Lower values = taller caves and more steep drops", "Default: 2.0"})
+		@Config.RequiresWorldRestart
+		public double verticalCompressionMultiplier = 2.0;
+		
 		@Config.Comment({"Dimension IDs that will use Vanilla cave generation rather than Worley's Caves", "Default:"})
 		@Config.RequiresWorldRestart
 		public int[] blackListedDims = {};

@@ -34,6 +34,7 @@ public class WorleyCaveGenerator extends MapGenBase
 	private static float noiseCutoff;
 	private static float warpAmplifier;
 	private static float easeInDepth;
+	private static float yCompression;
 	
 	
 	public WorleyCaveGenerator()
@@ -50,6 +51,7 @@ public class WorleyCaveGenerator extends MapGenBase
 		noiseCutoff = (float) Configs.cavegen.noiseCutoffValue;
 		warpAmplifier = (float) Configs.cavegen.warpAmplifier;
 		easeInDepth = (float) Configs.cavegen.easeInDepth;
+		yCompression = (float) Configs.cavegen.verticalCompressionMultiplier;
 		
 		vanillaCaveGen = new MapGenCaves();
 	}
@@ -78,21 +80,24 @@ public class WorleyCaveGenerator extends MapGenBase
 		}
 		
 		debugValueAdjustments();
-		
-		long millis = System.currentTimeMillis();
-
-		this.world = worldIn;
-		this.recursiveGenerate(worldIn, x, z, x, z, primer);
-
-		genTime[currentTimeIndex] = System.currentTimeMillis() - millis;
-//		System.out.println("chunk " + currentTimeIndex + ":" + genTime[currentTimeIndex]);
-		sum += genTime[currentTimeIndex];
-		currentTimeIndex++;
-		if (currentTimeIndex == genTime.length)
+		boolean logTime = false;
+		if(logTime)
 		{
-			System.out.printf("300 chunk average: %.2f ms per chunk\n", sum/300.0);
-			sum = 0;
-			currentTimeIndex = 0;
+			long millis = System.currentTimeMillis();
+	
+			this.world = worldIn;
+			this.recursiveGenerate(worldIn, x, z, x, z, primer);
+	
+			genTime[currentTimeIndex] = System.currentTimeMillis() - millis;
+	//		System.out.println("chunk " + currentTimeIndex + ":" + genTime[currentTimeIndex]);
+			sum += genTime[currentTimeIndex];
+			currentTimeIndex++;
+			if (currentTimeIndex == genTime.length)
+			{
+				System.out.printf("300 chunk average: %.2f ms per chunk\n", sum/300.0);
+				sum = 0;
+				currentTimeIndex = 0;
+			}
 		}
 	}
 
@@ -102,6 +107,7 @@ public class WorleyCaveGenerator extends MapGenBase
 		float oneEighth = 0.125F;
         float oneQuarter = 0.25F;
         float oneHalf = 0.5F;
+        float cutoffAdjuster = 0F;
         IBlockState holeFiller;
 
 		
@@ -191,15 +197,15 @@ public class WorleyCaveGenerator extends MapGenBase
                             		depth++;
                             	}
                             	
-//                            	float cutoffAdjuster = (2 * perlin.GetNoise(realX-2, localY+256.0f, realZ/2))/10;
+//                            	if(y == 63)
+//                            		cutoffAdjuster = (2*perlin.GetNoise(realX, realZ))/10;
 //            					noiseCutoff = -0.18f + cutoffAdjuster;
 
-                            	float adjustedNoiseCutoff = noiseCutoff;
+                            	float adjustedNoiseCutoff = noiseCutoff + cutoffAdjuster;
                             	if(depth < easeInDepth)
                             	{
                             		//higher threshold at surface, normal threshold below easeInDepth
-                            		//TODO test good value for surface cutoff
-                            		float surfaceNoiseCutoff = noiseCutoff+(Math.abs(noiseCutoff)*0.6F);
+                            		float surfaceNoiseCutoff = noiseCutoff+(Math.abs(noiseCutoff)*0.55F);
                             		adjustedNoiseCutoff = (float) MathHelper.clampedLerp(noiseCutoff, surfaceNoiseCutoff, (easeInDepth-(float)depth)/easeInDepth);
 
                             	}
@@ -270,7 +276,7 @@ public class WorleyCaveGenerator extends MapGenBase
 					zDisp = perlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
 					
 					//doubling the y frequency to get some more caves
-					noise = worleyF1divF3.SingleCellular3Edge(realX+xDisp, realY*2.0f+yDisp, realZ+zDisp);
+					noise = worleyF1divF3.SingleCellular3Edge(realX+xDisp, realY*yCompression+yDisp, realZ+zDisp);
 					noiseSamples[x][y][z] = noise;
 					
 					if (noise > noiseCutoff)

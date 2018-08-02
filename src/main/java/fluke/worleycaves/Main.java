@@ -37,7 +37,8 @@ public class Main
 	@EventHandler
 	public static void init(FMLInitializationEvent event)
 	{
-		aTest = new WorldTypeATest();
+		//debug test world
+//		aTest = new WorldTypeATest();
 	}
 	
 	@EventHandler
