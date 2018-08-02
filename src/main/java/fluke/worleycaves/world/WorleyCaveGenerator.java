@@ -81,13 +81,17 @@ public class WorleyCaveGenerator extends MapGenBase
 		
 		debugValueAdjustments();
 		boolean logTime = false;
+		long millis = 0;
 		if(logTime)
 		{
-			long millis = System.currentTimeMillis();
+			millis = System.currentTimeMillis();
+		}
+		
+		this.world = worldIn;
+		this.recursiveGenerate(worldIn, x, z, x, z, primer);
 	
-			this.world = worldIn;
-			this.recursiveGenerate(worldIn, x, z, x, z, primer);
-	
+		if(logTime)
+		{
 			genTime[currentTimeIndex] = System.currentTimeMillis() - millis;
 	//		System.out.println("chunk " + currentTimeIndex + ":" + genTime[currentTimeIndex]);
 			sum += genTime[currentTimeIndex];
@@ -276,7 +280,7 @@ public class WorleyCaveGenerator extends MapGenBase
 					zDisp = perlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
 					
 					//doubling the y frequency to get some more caves
-					noise = worleyF1divF3.SingleCellular3Edge(realX+xDisp, realY*yCompression+yDisp, realZ+zDisp);
+					noise = worleyF1divF3.SingleCellular3Edge(realX+xDisp, realY*2.0f+yDisp, realZ+zDisp);
 					noiseSamples[x][y][z] = noise;
 					
 					if (noise > noiseCutoff)
