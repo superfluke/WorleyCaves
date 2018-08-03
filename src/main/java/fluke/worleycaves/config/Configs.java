@@ -16,10 +16,6 @@ public class Configs
 		@Config.RequiresWorldRestart
 		public double noiseCutoffValue = -0.18;
 		
-		@Config.Comment({"At this y-level and below air is replaced by lava", "Default: 10"})
-		@Config.RequiresWorldRestart
-		public int lavaDepth = 10;
-		
 		@Config.Comment({"Controls how much to warp caves. Lower values = straighter caves", "Default: 8.0"})
 		@Config.RequiresWorldRestart
 		public double warpAmplifier = 8.0;
@@ -31,6 +27,10 @@ public class Configs
 		@Config.Comment({"Squishes caves on the Y axis. Lower values = taller caves and more steep drops", "Default: 2.0"})
 		@Config.RequiresWorldRestart
 		public double verticalCompressionMultiplier = 2.0;
+		
+	    @Config.Comment({"Streches (when > 1.0) or compresses (when < 1.0) cave generation along X and Z axis", "Default: 1.0"}) 
+	    @Config.RequiresWorldRestart 
+	    public double horizonalCompressionMultiplier = 1.0; 
 		
 		@Config.Comment({"Dimension IDs that will use Vanilla cave generation rather than Worley's Caves", "Default:"})
 		@Config.RequiresWorldRestart

@@ -32,6 +32,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 	private static float warpAmplifier;
 	private static float easeInDepth;
 	private static float yCompression;
+	private static float xzCompression;
 	
 	
 	public WorleyCaveGenerator()
@@ -40,12 +41,12 @@ public class WorleyCaveGenerator extends MapGenCaves
 		
 		displacementNoisePerlin.SetNoiseType(FastNoise.NoiseType.Perlin);
 		displacementNoisePerlin.SetFrequency(0.05f);
-		
-		lavaDepth = Configs.cavegen.lavaDepth;
+
 		noiseCutoff = (float) Configs.cavegen.noiseCutoffValue;
 		warpAmplifier = (float) Configs.cavegen.warpAmplifier;
 		easeInDepth = (float) Configs.cavegen.easeInDepth;
 		yCompression = (float) Configs.cavegen.verticalCompressionMultiplier;
+		xzCompression = (float) Configs.cavegen.horizonalCompressionMultiplier;
 		
 		vanillaCaveGen = new MapGenCaves();
 	}
@@ -73,7 +74,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		}
 		
 		debugValueAdjustments();
-		boolean logTime = true;
+		boolean logTime = false;
 		long millis = 0;
 		if(logTime)
 		{
@@ -243,7 +244,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 				//loop from top down for y values so we can adjust noise above current y later on
 				for(int y = 64; y >= 0; y--)
 				{
-					float realY = y*yCompression;
+					float realY = y*2;
 					
 					//Experiment making the cave system more chaotic the more you descend 
 					///TODO might be too dramatic down at lava level
@@ -258,7 +259,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 					zDisp = displacementNoisePerlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
 					
 					//doubling the y frequency to get some more caves
-					noise = worleyF1divF3.SingleCellular3Edge(realX+xDisp, realY*2.0f+yDisp, realZ+zDisp);
+					noise = worleyF1divF3.SingleCellular3Edge(realX*xzCompression+xDisp, realY*yCompression+yDisp, realZ*xzCompression+zDisp);
 					noiseSamples[x][y][z] = noise;
 					
 					if (noise > noiseCutoff)
