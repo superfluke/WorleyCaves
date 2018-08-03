@@ -2401,7 +2401,6 @@ public class FastNoise {
 	// Modified version of "SingleCellular2Edge(x, y, z)" from FastNoise
 	// Adds the third distance value for use
 	// This is not fully implemented in FastNoise and is called externally directly for this prototype, hence the public modifier
-	// TODO Implement fully or separate out as it's own utility
 	public float SingleCellular3Edge(float x, float y, float z)
 	{
 		x *= m_frequency;

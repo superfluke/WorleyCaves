@@ -22,8 +22,7 @@ public class WorleyCaveGenerator extends MapGenBase
 	double sum = 0;
 
 	private WorleyUtil worleyF1divF3 = new WorleyUtil();
-	private FastNoise perlin = new FastNoise();
-	private FastNoise perlin2 = new FastNoise();
+	private FastNoise displacementNoisePerlin = new FastNoise();
 	private MapGenCaves vanillaCaveGen;
 	
 	private int maxHeight = 128;
@@ -41,11 +40,8 @@ public class WorleyCaveGenerator extends MapGenBase
 	{
 		worleyF1divF3.SetFrequency(0.016f);
 		
-		perlin.SetNoiseType(FastNoise.NoiseType.Perlin);
-		perlin.SetFrequency(0.05f);
-		
-		perlin2.SetNoiseType(FastNoise.NoiseType.Perlin);
-		perlin2.SetFrequency(0.05f);
+		displacementNoisePerlin.SetNoiseType(FastNoise.NoiseType.Perlin);
+		displacementNoisePerlin.SetFrequency(0.05f);
 		
 		lavaDepth = Configs.cavegen.lavaDepth;
 		noiseCutoff = (float) Configs.cavegen.noiseCutoffValue;
@@ -67,7 +63,6 @@ public class WorleyCaveGenerator extends MapGenBase
 	@Override
 	public void generate(World worldIn, int x, int z, ChunkPrimer primer)
 	{
-		
 		int currentDim = worldIn.provider.getDimension();
 		//revert to vanilla cave generation for blacklisted dims
 		for(int blacklistedDim: Configs.cavegen.blackListedDims)
@@ -88,12 +83,11 @@ public class WorleyCaveGenerator extends MapGenBase
 		}
 		
 		this.world = worldIn;
-		this.recursiveGenerate(worldIn, x, z, x, z, primer);
+		this.generateWorleyCaves(worldIn, x, z, primer);
 	
 		if(logTime)
 		{
 			genTime[currentTimeIndex] = System.currentTimeMillis() - millis;
-	//		System.out.println("chunk " + currentTimeIndex + ":" + genTime[currentTimeIndex]);
 			sum += genTime[currentTimeIndex];
 			currentTimeIndex++;
 			if (currentTimeIndex == genTime.length)
@@ -105,22 +99,19 @@ public class WorleyCaveGenerator extends MapGenBase
 		}
 	}
 
-	protected void recursiveGenerate(World worldIn, int chunkX, int chunkZ, int originalX, int originalZ, ChunkPrimer chunkPrimerIn)
+	protected void generateWorleyCaves(World worldIn, int chunkX, int chunkZ, ChunkPrimer chunkPrimerIn)
     {
 		float[][][] samples = sampleNoise(chunkX, chunkZ);
-		float oneEighth = 0.125F;
         float oneQuarter = 0.25F;
         float oneHalf = 0.5F;
         float cutoffAdjuster = 0F;
         IBlockState holeFiller;
-
-		
-		perlin2.SetFrequency(0.1f);
+        
 		//each chunk divided into 4 subchunks along X axis
-		for (int x=0; x<4; x++)
+		for (int x = 0; x < 4; x++)
 		{
 			//each chunk divided into 4 subchunks along Z axis
-			for (int z=0; z<4; z++)
+			for (int z = 0; z < 4; z++)
 			{
 				int depth = 0;
 				//each chunk divided into 64 subchunks along Y axis. Need lots of y sample points to not break things
@@ -200,10 +191,6 @@ public class WorleyCaveGenerator extends MapGenBase
                             		//already hit surface, simply increment depth counter
                             		depth++;
                             	}
-                            	
-//                            	if(y == 63)
-//                            		cutoffAdjuster = (2*perlin.GetNoise(realX, realZ))/10;
-//            					noiseCutoff = -0.18f + cutoffAdjuster;
 
                             	float adjustedNoiseCutoff = noiseCutoff + cutoffAdjuster;
                             	if(depth < easeInDepth)
@@ -255,17 +242,17 @@ public class WorleyCaveGenerator extends MapGenBase
 	{
 		float[][][] noiseSamples = new float[5][65][5];
 		float noise;
-		for (int x=0; x<5; x++)
+		for (int x = 0; x < 5; x++)
 		{
 			int realX = x*4 + chunkX*16;
-			for (int z=0; z<5; z++)
+			for (int z = 0; z < 5; z++)
 			{
 				int realZ = z*4 + chunkZ*16;
 				
 				//loop from top down for y values so we can adjust noise above current y later on
-				for(int y=64; y>=0; y--)
+				for(int y = 64; y >= 0; y--)
 				{
-					int realY = y*2;
+					float realY = y*yCompression;
 					
 					//Experiment making the cave system more chaotic the more you descend 
 					///TODO might be too dramatic down at lava level
@@ -275,9 +262,9 @@ public class WorleyCaveGenerator extends MapGenBase
 					float yDisp = 0f;
 					float zDisp = 0f;
 					
-					xDisp = perlin.GetNoise(realX, realY, realZ)*dispAmp;
-					yDisp = perlin.GetNoise(realX, realY-256.0f, realZ)*dispAmp;
-					zDisp = perlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
+					xDisp = displacementNoisePerlin.GetNoise(realX, realY, realZ)*dispAmp;
+					yDisp = displacementNoisePerlin.GetNoise(realX, realY-256.0f, realZ)*dispAmp;
+					zDisp = displacementNoisePerlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
 					
 					//doubling the y frequency to get some more caves
 					noise = worleyF1divF3.SingleCellular3Edge(realX+xDisp, realY*2.0f+yDisp, realZ+zDisp);
@@ -289,21 +276,21 @@ public class WorleyCaveGenerator extends MapGenBase
 						//helps prevent caves fracturing during interpolation
 						
 						if(x > 0)
-							noiseSamples[x-1][y][z] = (noise * 0.2f) + (noiseSamples[x-1][y][z] * 0.8f);
+							noiseSamples[x-1][y][z] = (noise*0.2f) + (noiseSamples[x-1][y][z]*0.8f);
 						if(z > 0)
-							noiseSamples[x][y][z-1] = (noise * 0.2f) + (noiseSamples[x][y][z-1] * 0.8f);
+							noiseSamples[x][y][z-1] = (noise*0.2f) + (noiseSamples[x][y][z-1]*0.8f);
 						
 						//more heavily adjust y above 'air block' noise values to give players more headroom
 						if(y < 64)
 						{
 							float noiseAbove = noiseSamples[x][y+1][z];
 							if(noise > noiseAbove)
-								noiseSamples[x][y+1][z] = (noise * 0.8F) + (noiseAbove * 0.2F);
+								noiseSamples[x][y+1][z] = (noise*0.8F) + (noiseAbove*0.2F);
 							if(y < 63)
 							{
 								float noiseTwoAbove = noiseSamples[x][y+2][z];
 								if(noise > noiseTwoAbove)
-									noiseSamples[x][y+2][z] = (noise * 0.35F) + (noiseTwoAbove * 0.65F);
+									noiseSamples[x][y+2][z] = (noise*0.35F) + (noiseTwoAbove*0.65F);
 							}
 						}
 						

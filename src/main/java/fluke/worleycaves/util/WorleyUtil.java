@@ -299,10 +299,6 @@ public class WorleyUtil {
 			new Float3(-0.2016773589f, 0.008816271194f, -0.4021797064f),
 			new Float3(-0.07527055435f, -0.425643481f, -0.1251477955f)};
 	
-	private static int FastRound(float f) {
-		return (f >= 0) ? (int) (f + (float) 0.5) : (int) (f - (float) 0.5);
-	}
-	
 	// Modified version of "SingleCellular2Edge(x, y, z)" from FastNoise
 	// Adds the third distance value for use and trying to make it even faster
 	float[] dists = new float[27];
