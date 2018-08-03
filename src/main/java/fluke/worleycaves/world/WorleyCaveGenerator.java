@@ -5,17 +5,15 @@ import com.google.common.base.MoreObjects;
 import fluke.worleycaves.config.Configs;
 import fluke.worleycaves.util.FastNoise;
 import fluke.worleycaves.util.WorleyUtil;
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
-import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.MapGenCaves;
 
-public class WorleyCaveGenerator extends MapGenBase
+public class WorleyCaveGenerator extends MapGenCaves
 {
 	long[] genTime = new long[300];
 	int currentTimeIndex = 0;
@@ -75,7 +73,7 @@ public class WorleyCaveGenerator extends MapGenBase
 		}
 		
 		debugValueAdjustments();
-		boolean logTime = false;
+		boolean logTime = true;
 		long millis = 0;
 		if(logTime)
 		{
@@ -176,7 +174,7 @@ public class WorleyCaveGenerator extends MapGenBase
                             		{
 	                            		IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
 	                            		//use isDigable to skip leaves/wood getting counted as surface
-	            						if(isDigable(currentBlock, AIR)) 
+	            						if(canReplaceBlock(currentBlock, AIR)) 
 	            						{
 	            							depth++;
 	            						}
@@ -205,20 +203,13 @@ public class WorleyCaveGenerator extends MapGenBase
             					{
             						IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
             						IBlockState aboveBlock = (IBlockState) MoreObjects.firstNonNull(chunkPrimerIn.getBlockState(localX, localY+1, localZ), Blocks.AIR.getDefaultState());
-            						//make sure we only dig earthy blocks and dont dig into the ocean
-            						if(isDigable(currentBlock, aboveBlock))
-            						{
-	            						if(localY <= lavaDepth)
-	            						{
-	                						holeFiller = LAVA;
-	            						}
-	            						else
-	            						{
-	            							holeFiller = AIR;
-	            						}
-	            						//Diggy diggy hole
-	            						chunkPrimerIn.setBlockState(localX, localY, localZ, holeFiller);
-            						}
+            						
+            						boolean flag1 = false;
+            						if (isTopBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ))
+                                    {
+                                        flag1 = true;
+                                    }
+            						digBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ, flag1, currentBlock, aboveBlock);
             					}
                                 
                                 noiseVal += noiseStepZ;
@@ -301,52 +292,21 @@ public class WorleyCaveGenerator extends MapGenBase
 		return noiseSamples;
 	}
 	
-	private boolean isDigable(IBlockState block, IBlockState blockAbove) 
-	{
-		Block blockType = block.getBlock();
-		if (blockType == Blocks.STONE)
-        {
-            return true;
-        }
-        else if (blockType == Blocks.DIRT)
-        {
-            return true;
-        }
-        else if (blockType == Blocks.GRASS)
-        {
-            return true;
-        }
-        else if (blockType == Blocks.HARDENED_CLAY)
-        {
-            return true;
-        }
-        else if (blockType == Blocks.STAINED_HARDENED_CLAY)
-        {
-            return true;
-        }
-        else if (blockType == Blocks.SANDSTONE)
-        {
-            return true;
-        }
-        else if (blockType == Blocks.RED_SANDSTONE)
-        {
-            return true;
-        }
-        else if (blockType == Blocks.MYCELIUM)
-        {
-            return true;
-        }
-        else if (blockType == Blocks.SNOW_LAYER)
-        {
-            return true;
-        }
-		
-		// Check if not under ocean or river
-	    if ((blockType == Blocks.SAND || blockType == Blocks.GRAVEL) && blockAbove.getMaterial() != Material.WATER) 
-	    {
-	      return true;
-	    }
-	    
-	    return false;
-	}
+	//Because it's private in MapGenCaves this is reimplemented
+	//Determine if the block at the specified location is the top block for the biome, we take into account
+    //Vanilla bugs to make sure that we generate the map the same way vanilla does.
+    private boolean isTopBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ)
+    {
+        net.minecraft.world.biome.Biome biome = world.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
+        IBlockState state = data.getBlockState(x, y, z);
+        return (isExceptionBiome(biome) ? state.getBlock() == Blocks.GRASS : state.getBlock() == biome.topBlock);
+    }
+    
+  //Exception biomes to make sure we generate like vanilla
+    private boolean isExceptionBiome(net.minecraft.world.biome.Biome biome)
+    {
+        if (biome == net.minecraft.init.Biomes.BEACH) return true;
+        if (biome == net.minecraft.init.Biomes.DESERT) return true;
+        return false;
+    }
 }
