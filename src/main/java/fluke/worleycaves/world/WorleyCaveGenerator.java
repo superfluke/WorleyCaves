@@ -11,6 +11,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
+import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.MapGenCaves;
 
 public class WorleyCaveGenerator extends MapGenCaves
@@ -21,7 +22,8 @@ public class WorleyCaveGenerator extends MapGenCaves
 
 	private WorleyUtil worleyF1divF3 = new WorleyUtil();
 	private FastNoise displacementNoisePerlin = new FastNoise();
-	private MapGenCaves vanillaCaveGen;
+	private MapGenCaves replacementCaves;
+	private MapGenBase moddedCaveGen;
 	
 	private int maxHeight = 128;
 	
@@ -48,7 +50,13 @@ public class WorleyCaveGenerator extends MapGenCaves
 		yCompression = (float) Configs.cavegen.verticalCompressionMultiplier;
 		xzCompression = (float) Configs.cavegen.horizonalCompressionMultiplier;
 		
-		vanillaCaveGen = new MapGenCaves();
+		//try and grab other modded cave gens, like swiss cheese caves or Quark big caves
+		//our replace cavegen event will ignore cave events when the original cave class passed in is a Worley cave
+		moddedCaveGen = net.minecraftforge.event.terraingen.TerrainGen.getModdedMapGen(this, net.minecraftforge.event.terraingen.InitMapGenEvent.EventType.CAVE);
+		if(moddedCaveGen != this)
+			replacementCaves = (MapGenCaves) moddedCaveGen;
+		else
+			replacementCaves = new MapGenCaves(); //default to vanilla caves if there are no other modded cave gens
 	}
 	
 	private void debugValueAdjustments()
@@ -68,7 +76,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		{
 			if(currentDim == blacklistedDim)
 			{
-				this.vanillaCaveGen.generate(worldIn, x, z, primer);
+				this.replacementCaves.generate(worldIn, x, z, primer);
 				return;
 			} 
 		}
