@@ -22,7 +22,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 
 	private WorleyUtil worleyF1divF3 = new WorleyUtil();
 	private FastNoise displacementNoisePerlin = new FastNoise();
-	private MapGenCaves replacementCaves;
+	private MapGenBase replacementCaves;
 	private MapGenBase moddedCaveGen;
 	
 	private int maxHeight = 128;
@@ -54,7 +54,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		//our replace cavegen event will ignore cave events when the original cave class passed in is a Worley cave
 		moddedCaveGen = net.minecraftforge.event.terraingen.TerrainGen.getModdedMapGen(this, net.minecraftforge.event.terraingen.InitMapGenEvent.EventType.CAVE);
 		if(moddedCaveGen != this)
-			replacementCaves = (MapGenCaves) moddedCaveGen;
+			replacementCaves = moddedCaveGen;
 		else
 			replacementCaves = new MapGenCaves(); //default to vanilla caves if there are no other modded cave gens
 	}
