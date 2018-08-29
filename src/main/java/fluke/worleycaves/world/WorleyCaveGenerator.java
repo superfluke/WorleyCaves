@@ -5,6 +5,7 @@ import com.google.common.base.MoreObjects;
 import fluke.worleycaves.config.Configs;
 import fluke.worleycaves.util.FastNoise;
 import fluke.worleycaves.util.WorleyUtil;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
@@ -35,6 +36,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 	private static float easeInDepth;
 	private static float yCompression;
 	private static float xzCompression;
+	private static float surfaceCutoff;
 	
 	
 	public WorleyCaveGenerator()
@@ -49,6 +51,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		easeInDepth = (float) Configs.cavegen.easeInDepth;
 		yCompression = (float) Configs.cavegen.verticalCompressionMultiplier;
 		xzCompression = (float) Configs.cavegen.horizonalCompressionMultiplier;
+		surfaceCutoff = (float) Configs.cavegen.surfaceCutoffValue;
 		
 		//try and grab other modded cave gens, like swiss cheese caves or Quark big caves
 		//our replace cavegen event will ignore cave events when the original cave class passed in is a Worley cave
@@ -82,7 +85,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		}
 		
 		debugValueAdjustments();
-		boolean logTime = false;
+		boolean logTime = true; //TODO turn off
 		long millis = 0;
 		if(logTime)
 		{
@@ -111,7 +114,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		float[][][] samples = sampleNoise(chunkX, chunkZ);
         float oneQuarter = 0.25F;
         float oneHalf = 0.5F;
-        float cutoffAdjuster = 0F;
+        //float cutoffAdjuster = 0F; //TODO one day, perlin adjustments to cutoff
         IBlockState holeFiller;
         
 		//each chunk divided into 4 subchunks along X axis
@@ -199,26 +202,43 @@ public class WorleyCaveGenerator extends MapGenCaves
                             		depth++;
                             	}
 
-                            	float adjustedNoiseCutoff = noiseCutoff + cutoffAdjuster;
+                            	float adjustedNoiseCutoff = noiseCutoff;// + cutoffAdjuster;
                             	if(depth < easeInDepth)
                             	{
                             		//higher threshold at surface, normal threshold below easeInDepth
-                            		float surfaceNoiseCutoff = noiseCutoff+(Math.abs(noiseCutoff)*0.55F);
-                            		adjustedNoiseCutoff = (float) MathHelper.clampedLerp(noiseCutoff, surfaceNoiseCutoff, (easeInDepth-(float)depth)/easeInDepth);
+                            		adjustedNoiseCutoff = (float) MathHelper.clampedLerp(noiseCutoff, surfaceCutoff, (easeInDepth-(float)depth)/easeInDepth);
 
                             	}
                             	
             					if (noiseVal > adjustedNoiseCutoff)
             					{
-            						IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
             						IBlockState aboveBlock = (IBlockState) MoreObjects.firstNonNull(chunkPrimerIn.getBlockState(localX, localY+1, localZ), Blocks.AIR.getDefaultState());
-            						
-            						boolean flag1 = false;
-            						if (isTopBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ))
-                                    {
-                                        flag1 = true;
-                                    }
-            						digBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ, flag1, currentBlock, aboveBlock);
+            						if(aboveBlock.getMaterial() != Material.WATER)
+            						{
+            							if(depth < easeInDepth) 
+            							{
+            								if(localX < 15)
+            									if(chunkPrimerIn.getBlockState(localX+1, localY, localZ).getMaterial() == Material.WATER)
+            										continue;
+            								if(localX > 0)
+            									if(chunkPrimerIn.getBlockState(localX-1, localY, localZ).getMaterial() == Material.WATER)
+            										continue;
+            								if(localZ < 15)
+            									if(chunkPrimerIn.getBlockState(localX, localY, localZ+1).getMaterial() == Material.WATER)
+            										continue;
+            								if(localZ > 0)
+            									if(chunkPrimerIn.getBlockState(localX, localY, localZ-1).getMaterial() == Material.WATER)
+            										continue;
+            							}
+	            						IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
+	            						boolean flag1 = false;
+	            						if (isTopBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ))
+	                                    {
+	                                        flag1 = true;
+	                                    }
+	            						//TODO floating sand
+	            						digBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ, flag1, currentBlock, aboveBlock);
+            						}
             					}
                                 
                                 noiseVal += noiseStepZ;
@@ -311,7 +331,7 @@ public class WorleyCaveGenerator extends MapGenCaves
         return (isExceptionBiome(biome) ? state.getBlock() == Blocks.GRASS : state.getBlock() == biome.topBlock);
     }
     
-  //Exception biomes to make sure we generate like vanilla
+    //Exception biomes to make sure we generate like vanilla
     private boolean isExceptionBiome(net.minecraft.world.biome.Biome biome)
     {
         if (biome == net.minecraft.init.Biomes.BEACH) return true;

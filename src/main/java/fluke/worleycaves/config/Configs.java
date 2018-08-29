@@ -16,6 +16,10 @@ public class Configs
 		@Config.RequiresWorldRestart
 		public double noiseCutoffValue = -0.18;
 		
+		@Config.Comment({"Controls size of caves at the surface. Smaller values = more caves break through the surface. Between -1.0 and 1.0", "Default: -0.081 (45% of noiseCutoffValue)"})
+		@Config.RequiresWorldRestart
+		public double surfaceCutoffValue = -0.081;
+		
 		@Config.Comment({"Controls how much to warp caves. Lower values = straighter caves", "Default: 8.0"})
 		@Config.RequiresWorldRestart
 		public double warpAmplifier = 8.0;
