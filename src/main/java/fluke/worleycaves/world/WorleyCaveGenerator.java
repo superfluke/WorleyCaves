@@ -85,7 +85,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		}
 		
 		debugValueAdjustments();
-		boolean logTime = true; //TODO turn off
+		boolean logTime = false;
 		long millis = 0;
 		if(logTime)
 		{
@@ -111,7 +111,8 @@ public class WorleyCaveGenerator extends MapGenCaves
 
 	protected void generateWorleyCaves(World worldIn, int chunkX, int chunkZ, ChunkPrimer chunkPrimerIn)
     {
-		float[][][] samples = sampleNoise(chunkX, chunkZ);
+		int chunkMaxHeight = getMaxSurfaceHeight(chunkPrimerIn);
+		float[][][] samples = sampleNoise(chunkX, chunkZ, chunkMaxHeight+1);
         float oneQuarter = 0.25F;
         float oneHalf = 0.5F;
         //float cutoffAdjuster = 0F; //TODO one day, perlin adjustments to cutoff
@@ -215,6 +216,7 @@ public class WorleyCaveGenerator extends MapGenCaves
             						IBlockState aboveBlock = (IBlockState) MoreObjects.firstNonNull(chunkPrimerIn.getBlockState(localX, localY+1, localZ), Blocks.AIR.getDefaultState());
             						if(aboveBlock.getMaterial() != Material.WATER)
             						{
+            							//if we are in the easeInDepth range, do some extra checks for water before digging
             							if(depth < easeInDepth) 
             							{
             								if(localX < 15)
@@ -236,7 +238,6 @@ public class WorleyCaveGenerator extends MapGenCaves
 	                                    {
 	                                        flag1 = true;
 	                                    }
-	            						//TODO floating sand
 	            						digBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ, flag1, currentBlock, aboveBlock);
             						}
             					}
@@ -258,7 +259,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		}
     }
 	
-	public float[][][] sampleNoise(int chunkX, int chunkZ) 
+	public float[][][] sampleNoise(int chunkX, int chunkZ, int maxHeight) 
 	{
 		float[][][] noiseSamples = new float[5][65][5];
 		float noise;
@@ -273,52 +274,89 @@ public class WorleyCaveGenerator extends MapGenCaves
 				for(int y = 64; y >= 0; y--)
 				{
 					float realY = y*2;
-					
-					//Experiment making the cave system more chaotic the more you descend 
-					///TODO might be too dramatic down at lava level
-					float dispAmp = (float) (warpAmplifier * ((maxHeight-y)/(maxHeight*0.85)));
-					
-					float xDisp = 0f;
-					float yDisp = 0f;
-					float zDisp = 0f;
-					
-					xDisp = displacementNoisePerlin.GetNoise(realX, realY, realZ)*dispAmp;
-					yDisp = displacementNoisePerlin.GetNoise(realX, realY-256.0f, realZ)*dispAmp;
-					zDisp = displacementNoisePerlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
-					
-					//doubling the y frequency to get some more caves
-					noise = worleyF1divF3.SingleCellular3Edge(realX*xzCompression+xDisp, realY*yCompression+yDisp, realZ*xzCompression+zDisp);
-					noiseSamples[x][y][z] = noise;
-					
-					if (noise > noiseCutoff)
+					if(realY > maxHeight)
 					{
-						//if noise is below cutoff, adjust values of neighbors
-						//helps prevent caves fracturing during interpolation
+						noiseSamples[x][y][z] = -1.1F;
+					}
+					else
+					{
+						//Experiment making the cave system more chaotic the more you descend 
+						///TODO might be too dramatic down at lava level
+						float dispAmp = (float) (warpAmplifier * ((maxHeight-y)/(maxHeight*0.85)));
 						
-						if(x > 0)
-							noiseSamples[x-1][y][z] = (noise*0.2f) + (noiseSamples[x-1][y][z]*0.8f);
-						if(z > 0)
-							noiseSamples[x][y][z-1] = (noise*0.2f) + (noiseSamples[x][y][z-1]*0.8f);
+						float xDisp = 0f;
+						float yDisp = 0f;
+						float zDisp = 0f;
 						
-						//more heavily adjust y above 'air block' noise values to give players more headroom
-						if(y < 64)
+						xDisp = displacementNoisePerlin.GetNoise(realX, realY, realZ)*dispAmp;
+						yDisp = displacementNoisePerlin.GetNoise(realX, realY-256.0f, realZ)*dispAmp;
+						zDisp = displacementNoisePerlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
+						
+						//doubling the y frequency to get some more caves
+						noise = worleyF1divF3.SingleCellular3Edge(realX*xzCompression+xDisp, realY*yCompression+yDisp, realZ*xzCompression+zDisp);
+						noiseSamples[x][y][z] = noise;
+						
+						if (noise > noiseCutoff)
 						{
-							float noiseAbove = noiseSamples[x][y+1][z];
-							if(noise > noiseAbove)
-								noiseSamples[x][y+1][z] = (noise*0.8F) + (noiseAbove*0.2F);
-							if(y < 63)
+							//if noise is below cutoff, adjust values of neighbors
+							//helps prevent caves fracturing during interpolation
+							
+							if(x > 0)
+								noiseSamples[x-1][y][z] = (noise*0.2f) + (noiseSamples[x-1][y][z]*0.8f);
+							if(z > 0)
+								noiseSamples[x][y][z-1] = (noise*0.2f) + (noiseSamples[x][y][z-1]*0.8f);
+							
+							//more heavily adjust y above 'air block' noise values to give players more headroom
+							if(y < 64)
 							{
-								float noiseTwoAbove = noiseSamples[x][y+2][z];
-								if(noise > noiseTwoAbove)
-									noiseSamples[x][y+2][z] = (noise*0.35F) + (noiseTwoAbove*0.65F);
+								float noiseAbove = noiseSamples[x][y+1][z];
+								if(noise > noiseAbove)
+									noiseSamples[x][y+1][z] = (noise*0.8F) + (noiseAbove*0.2F);
+								if(y < 63)
+								{
+									float noiseTwoAbove = noiseSamples[x][y+2][z];
+									if(noise > noiseTwoAbove)
+										noiseSamples[x][y+2][z] = (noise*0.35F) + (noiseTwoAbove*0.65F);
+								}
 							}
+							
 						}
-						
 					}
 				}
 			}
 		}
 		return noiseSamples;
+	}
+	
+	private int getSurfaceHeight(ChunkPrimer chunkPrimerIn, int localX, int localZ) 
+	{
+		for(int y = maxHeight; y > 0; y--)
+		{
+			IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, y, localZ);
+			if(canReplaceBlock(currentBlock, AIR)) 
+			{
+				return y;
+			}
+		}	
+		return 0;
+	}
+	
+	//tests 8 edge points and center of chunk to get max height
+	private int getMaxSurfaceHeight(ChunkPrimer primer)
+	{
+		int max = 0;
+		int[] testcords = {0, 7, 15};
+		
+		for(int n = 0; n < testcords.length; n++)
+		{
+			for(int m = 0; m < testcords.length; m++)
+			{
+				int testmax = getSurfaceHeight(primer, testcords[n], testcords[m]);
+				if(testmax > max)
+					max = testmax;
+			}
+		}
+		return max;
 	}
 	
 	//Because it's private in MapGenCaves this is reimplemented
@@ -337,5 +375,54 @@ public class WorleyCaveGenerator extends MapGenCaves
         if (biome == net.minecraft.init.Biomes.BEACH) return true;
         if (biome == net.minecraft.init.Biomes.DESERT) return true;
         return false;
+    }
+    
+    /**
+     * Digs out the current block, default implementation removes stone, filler, and top block
+     * Sets the block to lava if y is less then 10, and air other wise.
+     * If setting to air, it also checks to see if we've broken the surface and if so
+     * tries to make the floor the biome's top block
+     *
+     * @param data Block data array
+     * @param index Pre-calculated index into block data
+     * @param x local X position
+     * @param y local Y position
+     * @param z local Z position
+     * @param chunkX Chunk X position
+     * @param chunkZ Chunk Y position
+     * @param foundTop True if we've encountered the biome's top block. Ideally if we've broken the surface.
+     */
+    protected void digBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ, boolean foundTop, IBlockState state, IBlockState up)
+    {
+        net.minecraft.world.biome.Biome biome = world.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
+        IBlockState top = biome.topBlock;
+        IBlockState filler = biome.fillerBlock;
+
+        if (this.canReplaceBlock(state, up) || state.getBlock() == top.getBlock() || state.getBlock() == filler.getBlock())
+        {
+            if (y - 1 < 10)
+            {
+                data.setBlockState(x, y, z, BLK_LAVA);
+            }
+            else
+            {
+                data.setBlockState(x, y, z, BLK_AIR);
+
+                if (foundTop && data.getBlockState(x, y - 1, z).getBlock() == filler.getBlock())
+                {
+                    data.setBlockState(x, y - 1, z, top.getBlock().getDefaultState());
+                }
+                
+                //replace floating sand with sandstone
+                if(up == Blocks.SAND.getDefaultState())
+                {
+                	data.setBlockState(x, y+1, z, BLK_SANDSTONE);
+                }
+                else if(up == Blocks.SAND.getStateFromMeta(1))
+                {
+                	data.setBlockState(x, y+1, z, BLK_RED_SANDSTONE);
+                }
+            }
+        }
     }
 }
