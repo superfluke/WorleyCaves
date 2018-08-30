@@ -26,17 +26,18 @@ public class WorleyCaveGenerator extends MapGenCaves
 	private MapGenBase replacementCaves;
 	private MapGenBase moddedCaveGen;
 	
-	private int maxHeight = 128;
+	
 	
 	private static final IBlockState LAVA = Blocks.LAVA.getDefaultState();
 	private static final IBlockState AIR = Blocks.AIR.getDefaultState();
-	private static int lavaDepth;
+	private static int maxCaveHeight;
 	private static float noiseCutoff;
 	private static float warpAmplifier;
 	private static float easeInDepth;
 	private static float yCompression;
 	private static float xzCompression;
 	private static float surfaceCutoff;
+
 	
 	
 	public WorleyCaveGenerator()
@@ -45,7 +46,8 @@ public class WorleyCaveGenerator extends MapGenCaves
 		
 		displacementNoisePerlin.SetNoiseType(FastNoise.NoiseType.Perlin);
 		displacementNoisePerlin.SetFrequency(0.05f);
-
+		
+		maxCaveHeight = Configs.cavegen.maxCaveHeight;
 		noiseCutoff = (float) Configs.cavegen.noiseCutoffValue;
 		warpAmplifier = (float) Configs.cavegen.warpAmplifier;
 		easeInDepth = (float) Configs.cavegen.easeInDepth;
@@ -112,6 +114,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 	protected void generateWorleyCaves(World worldIn, int chunkX, int chunkZ, ChunkPrimer chunkPrimerIn)
     {
 		int chunkMaxHeight = getMaxSurfaceHeight(chunkPrimerIn);
+		int seaLevel = worldIn.getSeaLevel();
 		float[][][] samples = sampleNoise(chunkX, chunkZ, chunkMaxHeight+1);
         float oneQuarter = 0.25F;
         float oneHalf = 0.5F;
@@ -216,8 +219,8 @@ public class WorleyCaveGenerator extends MapGenCaves
             						IBlockState aboveBlock = (IBlockState) MoreObjects.firstNonNull(chunkPrimerIn.getBlockState(localX, localY+1, localZ), Blocks.AIR.getDefaultState());
             						if(aboveBlock.getMaterial() != Material.WATER)
             						{
-            							//if we are in the easeInDepth range, do some extra checks for water before digging
-            							if(depth < easeInDepth) 
+            							//if we are in the easeInDepth range or above sea level, do some extra checks for water before digging
+            							if(depth < easeInDepth || localY > (seaLevel - 8)) 
             							{
             								if(localX < 15)
             									if(chunkPrimerIn.getBlockState(localX+1, localY, localZ).getMaterial() == Material.WATER)
@@ -259,8 +262,9 @@ public class WorleyCaveGenerator extends MapGenCaves
 		}
     }
 	
-	public float[][][] sampleNoise(int chunkX, int chunkZ, int maxHeight) 
+	public float[][][] sampleNoise(int chunkX, int chunkZ, int maxSurfaceHeight) 
 	{
+		int originalMaxHeight = 128;
 		float[][][] noiseSamples = new float[5][65][5];
 		float noise;
 		for (int x = 0; x < 5; x++)
@@ -274,7 +278,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 				for(int y = 64; y >= 0; y--)
 				{
 					float realY = y*2;
-					if(realY > maxHeight)
+					if(realY > maxSurfaceHeight || realY > maxCaveHeight)
 					{
 						noiseSamples[x][y][z] = -1.1F;
 					}
@@ -282,7 +286,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 					{
 						//Experiment making the cave system more chaotic the more you descend 
 						///TODO might be too dramatic down at lava level
-						float dispAmp = (float) (warpAmplifier * ((maxHeight-y)/(maxHeight*0.85)));
+						float dispAmp = (float) (warpAmplifier * ((originalMaxHeight-y)/(originalMaxHeight*0.85)));
 						
 						float xDisp = 0f;
 						float yDisp = 0f;
@@ -330,7 +334,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 	
 	private int getSurfaceHeight(ChunkPrimer chunkPrimerIn, int localX, int localZ) 
 	{
-		for(int y = maxHeight; y > 0; y--)
+		for(int y = maxCaveHeight; y > 0; y--)
 		{
 			IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, y, localZ);
 			if(canReplaceBlock(currentBlock, AIR)) 

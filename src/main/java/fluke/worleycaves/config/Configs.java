@@ -39,6 +39,10 @@ public class Configs
 		@Config.Comment({"Dimension IDs that will use Vanilla cave generation rather than Worley's Caves", "Default:"})
 		@Config.RequiresWorldRestart
 		public int[] blackListedDims = {};
+		
+		@Config.Comment({"Caves will not attempt to generate above this y level. Range 1-128", "Default: 128"})
+		@Config.RequiresWorldRestart
+		public int maxCaveHeight = 128;
 	}
 
 }
