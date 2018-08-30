@@ -42,6 +42,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 	
 	public WorleyCaveGenerator()
 	{
+		//TODO noise should probably be seeded with world seed
 		worleyF1divF3.SetFrequency(0.016f);
 		
 		displacementNoisePerlin.SetNoiseType(FastNoise.NoiseType.Perlin);
