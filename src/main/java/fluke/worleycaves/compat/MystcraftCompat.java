@@ -48,6 +48,7 @@ public class MystcraftCompat
             Main.LOGGER.error("API undefined!");
         }
 		
-		worleysSymbol = symbolFactory.createSymbol(Blocks.OBSIDIAN.getDefaultState(), "Terrain", 2, new CategoryPair(BlockCategory.TERRAIN, 4));
+		worleysSymbol = symbolFactory.createSymbol(Blocks.OBSIDIAN.getDefaultState(), "Weave", 2, new CategoryPair(BlockCategory.TERRAIN, 4));
+		SymbolRegistration.symbolRegistry.register(worleysSymbol);
 	}
 }
