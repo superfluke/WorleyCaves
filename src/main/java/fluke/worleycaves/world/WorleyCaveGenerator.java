@@ -129,8 +129,8 @@ public class WorleyCaveGenerator extends MapGenCaves
 			for (int z = 0; z < 4; z++)
 			{
 				int depth = 0;
-				//each chunk divided into 64 subchunks along Y axis. Need lots of y sample points to not break things
-				for(int y = 63; y >= 0; y--)
+				//each chunk divided into 128 subchunks along Y axis. Need lots of y sample points to not break things
+				for(int y = (maxCaveHeight/2)-1; y >= 0; y--)
 				{
 					//grab the 8 sample points needed from the noise values
 					float x0y0z0 = samples[x][y][z];
@@ -266,7 +266,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 	public float[][][] sampleNoise(int chunkX, int chunkZ, int maxSurfaceHeight) 
 	{
 		int originalMaxHeight = 128;
-		float[][][] noiseSamples = new float[5][65][5];
+		float[][][] noiseSamples = new float[5][129][5];
 		float noise;
 		for (int x = 0; x < 5; x++)
 		{
@@ -276,11 +276,12 @@ public class WorleyCaveGenerator extends MapGenCaves
 				int realZ = z*4 + chunkZ*16;
 				
 				//loop from top down for y values so we can adjust noise above current y later on
-				for(int y = 64; y >= 0; y--)
+				for(int y = 128; y >= 0; y--)
 				{
 					float realY = y*2;
 					if(realY > maxSurfaceHeight || realY > maxCaveHeight)
 					{
+						//if outside of valid cave range set noise value below normal minimum of -1.0
 						noiseSamples[x][y][z] = -1.1F;
 					}
 					else
@@ -312,12 +313,12 @@ public class WorleyCaveGenerator extends MapGenCaves
 								noiseSamples[x][y][z-1] = (noise*0.2f) + (noiseSamples[x][y][z-1]*0.8f);
 							
 							//more heavily adjust y above 'air block' noise values to give players more headroom
-							if(y < 64)
+							if(y < 128)
 							{
 								float noiseAbove = noiseSamples[x][y+1][z];
 								if(noise > noiseAbove)
 									noiseSamples[x][y+1][z] = (noise*0.8F) + (noiseAbove*0.2F);
-								if(y < 63)
+								if(y < 127)
 								{
 									float noiseTwoAbove = noiseSamples[x][y+2][z];
 									if(noise > noiseTwoAbove)

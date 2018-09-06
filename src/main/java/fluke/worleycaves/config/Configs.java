@@ -43,7 +43,7 @@ public class Configs
 		@Config.RequiresWorldRestart
 		public int[] blackListedDims = {};
 		
-		@Config.Comment({"Caves will not attempt to generate above this y level. Range 1-128", "Default: 128"})
+		@Config.Comment({"Caves will not attempt to generate above this y level. Range 1-256", "Default: 128"})
 		@Config.RequiresWorldRestart
 		public int maxCaveHeight = 128;
 	}
