@@ -237,12 +237,12 @@ public class WorleyCaveGenerator extends MapGenCaves
             										continue;
             							}
 	            						IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
-	            						boolean flag1 = false;
+	            						boolean foundTopBlock = false;
 	            						if (isTopBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ))
 	                                    {
-	                                        flag1 = true;
+	                                        foundTopBlock = true;
 	                                    }
-	            						digBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ, flag1, currentBlock, aboveBlock);
+	            						digBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ, foundTopBlock, currentBlock, aboveBlock);
             						}
             					}
                                 
@@ -371,7 +371,7 @@ public class WorleyCaveGenerator extends MapGenCaves
     {
         net.minecraft.world.biome.Biome biome = world.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
         IBlockState state = data.getBlockState(x, y, z);
-        return (isExceptionBiome(biome) ? state.getBlock() == Blocks.GRASS : state.getBlock() == biome.topBlock);
+        return (isExceptionBiome(biome) ? state.getBlock() == Blocks.GRASS : state == biome.topBlock);
     }
     
     //Exception biomes to make sure we generate like vanilla
@@ -415,7 +415,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 
                 if (foundTop && data.getBlockState(x, y - 1, z).getBlock() == filler.getBlock())
                 {
-                    data.setBlockState(x, y - 1, z, top.getBlock().getDefaultState());
+                    data.setBlockState(x, y - 1, z, top);
                 }
                 
                 //replace floating sand with sandstone
