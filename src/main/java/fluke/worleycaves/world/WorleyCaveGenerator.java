@@ -336,15 +336,26 @@ public class WorleyCaveGenerator extends MapGenCaves
 	
 	private int getSurfaceHeight(ChunkPrimer chunkPrimerIn, int localX, int localZ) 
 	{
-		for(int y = maxCaveHeight; y > 0; y--)
+		//Using a recursive binary search to find the surface
+		return recursiveBinarySurfaceSearch(chunkPrimerIn, localX, localZ, 255, 0);
+	}
+	
+	//Recursive binary search, this search always converges on the surface in 8 in cycles for the range 255 >= y >= 0
+	private int recursiveBinarySurfaceSearch(ChunkPrimer chunkPrimer, int localX, int localZ, int searchTop, int searchBottom) {
+		int top = searchTop;
+		if(searchTop > searchBottom) 
 		{
-			IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, y, localZ);
-			if(canReplaceBlock(currentBlock, AIR)) 
+			int searchMid = (searchBottom+searchTop)/2;
+			if(canReplaceBlock(chunkPrimer.getBlockState(localX, searchMid, localZ), AIR))
 			{
-				return y;
+				top = recursiveBinarySurfaceSearch(chunkPrimer, localX, localZ, searchTop, searchMid+1);
 			}
-		}	
-		return 0;
+			else
+			{
+				top = recursiveBinarySurfaceSearch(chunkPrimer, localX, localZ, searchMid, searchBottom);
+			}
+		}
+		return top;
 	}
 	
 	//tests 8 edge points and center of chunk to get max height
