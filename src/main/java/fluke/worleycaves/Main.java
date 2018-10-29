@@ -4,8 +4,10 @@ package fluke.worleycaves;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import fluke.worleycaves.config.Configs;
 import fluke.worleycaves.proxy.CommonProxy;
 import fluke.worleycaves.util.Reference;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -26,6 +28,9 @@ public class Main
 	@EventHandler
 	public static void preInit(FMLPreInitializationEvent event)
 	{
+		Configs.config = new Configuration(event.getSuggestedConfigurationFile());
+		Configs.refreshConfig();
+		
 		proxy.preInit(event);
 	}
 }

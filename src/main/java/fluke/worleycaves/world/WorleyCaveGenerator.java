@@ -1,16 +1,15 @@
 package fluke.worleycaves.world;
 
-import com.google.common.base.MoreObjects;
-
 import fluke.worleycaves.config.Configs;
 import fluke.worleycaves.util.FastNoise;
+import fluke.worleycaves.util.MathHelper;
 import fluke.worleycaves.util.WorleyUtil;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.MapGenCaves;
@@ -48,13 +47,13 @@ public class WorleyCaveGenerator extends MapGenCaves
 		displacementNoisePerlin.SetNoiseType(FastNoise.NoiseType.Perlin);
 		displacementNoisePerlin.SetFrequency(0.05f);
 		
-		maxCaveHeight = Configs.cavegen.maxCaveHeight;
-		noiseCutoff = (float) Configs.cavegen.noiseCutoffValue;
-		warpAmplifier = (float) Configs.cavegen.warpAmplifier;
-		easeInDepth = (float) Configs.cavegen.easeInDepth;
-		yCompression = (float) Configs.cavegen.verticalCompressionMultiplier;
-		xzCompression = (float) Configs.cavegen.horizonalCompressionMultiplier;
-		surfaceCutoff = (float) Configs.cavegen.surfaceCutoffValue;
+		maxCaveHeight = Configs.maxCaveHeight;
+		noiseCutoff = (float) Configs.noiseCutoffValue;
+		warpAmplifier = (float) Configs.warpAmplifier;
+		easeInDepth = (float) Configs.easeInDepth;
+		yCompression = (float) Configs.verticalCompressionMultiplier;
+		xzCompression = (float) Configs.horizonalCompressionMultiplier;
+		surfaceCutoff = (float) Configs.surfaceCutoffValue;
 		
 		//try and grab other modded cave gens, like swiss cheese caves or Quark big caves
 		//our replace cavegen event will ignore cave events when the original cave class passed in is a Worley cave
@@ -78,7 +77,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 	{
 		int currentDim = worldIn.provider.getDimension();
 		//revert to vanilla cave generation for blacklisted dims
-		for(int blacklistedDim: Configs.cavegen.blackListedDims)
+		for(int blacklistedDim: Configs.blackListedDims)
 		{
 			if(currentDim == blacklistedDim)
 			{
@@ -95,7 +94,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 			millis = System.currentTimeMillis();
 		}
 		
-		this.world = worldIn;
+		this.worldObj = worldIn;
 		this.generateWorleyCaves(worldIn, x, z, primer);
 	
 		if(logTime)
@@ -217,7 +216,7 @@ public class WorleyCaveGenerator extends MapGenCaves
                             	
             					if (noiseVal > adjustedNoiseCutoff)
             					{
-            						IBlockState aboveBlock = (IBlockState) MoreObjects.firstNonNull(chunkPrimerIn.getBlockState(localX, localY+1, localZ), Blocks.AIR.getDefaultState());
+            						IBlockState aboveBlock = firstNonNull(chunkPrimerIn.getBlockState(localX, localY+1, localZ), Blocks.AIR.getDefaultState());
             						if(aboveBlock.getMaterial() != Material.WATER)
             						{
             							//if we are in the easeInDepth range or above sea level, do some extra checks for water before digging
@@ -381,7 +380,7 @@ public class WorleyCaveGenerator extends MapGenCaves
     //Vanilla bugs to make sure that we generate the map the same way vanilla does.
     private boolean isTopBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ)
     {
-        net.minecraft.world.biome.Biome biome = world.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
+        Biome biome = worldObj.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
         IBlockState state = data.getBlockState(x, y, z);
         return (isExceptionBiome(biome) ? state.getBlock() == Blocks.GRASS : state == biome.topBlock);
     }
@@ -411,7 +410,7 @@ public class WorleyCaveGenerator extends MapGenCaves
      */
     protected void digBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ, boolean foundTop, IBlockState state, IBlockState up)
     {
-        net.minecraft.world.biome.Biome biome = world.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
+        net.minecraft.world.biome.Biome biome = worldObj.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
         IBlockState top = biome.topBlock;
         IBlockState filler = biome.fillerBlock;
 
@@ -441,5 +440,10 @@ public class WorleyCaveGenerator extends MapGenCaves
                 }
             }
         }
+    }
+    
+    private IBlockState firstNonNull(IBlockState first, IBlockState second)
+    {
+    	return first != null ? first : second;
     }
 }
