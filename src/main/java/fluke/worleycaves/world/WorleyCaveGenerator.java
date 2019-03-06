@@ -25,6 +25,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 	private FastNoise displacementNoisePerlin = new FastNoise();
 	private MapGenBase replacementCaves;
 	private MapGenBase moddedCaveGen;
+	private ThreadedCaveNoise caveNoiseGen;
 	
 	
 	
@@ -88,7 +89,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		}
 		
 		debugValueAdjustments();
-		boolean logTime = false;
+		boolean logTime = true; //TODO set false
 		long millis = 0;
 		if(logTime)
 		{
@@ -116,7 +117,8 @@ public class WorleyCaveGenerator extends MapGenCaves
     {
 		int chunkMaxHeight = getMaxSurfaceHeight(chunkPrimerIn);
 		int seaLevel = worldIn.getSeaLevel();
-		float[][][] samples = sampleNoise(chunkX, chunkZ, chunkMaxHeight+1);
+		//float[][][] samples = sampleNoise(chunkX, chunkZ, chunkMaxHeight+1);
+		float[][][] samples = ThreadedCaveNoise.sampleNoise(chunkX, chunkZ, chunkMaxHeight+1);
         float oneQuarter = 0.25F;
         float oneHalf = 0.5F;
         //float cutoffAdjuster = 0F; //TODO one day, perlin adjustments to cutoff
@@ -263,6 +265,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		}
     }
 	
+	/*
 	public float[][][] sampleNoise(int chunkX, int chunkZ, int maxSurfaceHeight) 
 	{
 		int originalMaxHeight = 128;
@@ -333,6 +336,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		}
 		return noiseSamples;
 	}
+	*/
 	
 	private int getSurfaceHeight(ChunkPrimer chunkPrimerIn, int localX, int localZ) 
 	{
