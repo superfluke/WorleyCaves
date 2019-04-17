@@ -19,6 +19,7 @@ usernamecache.json
 
 # Package Files #
 *.jar
+!gradle-wrapper.jar
 *.war
 *.ear
 /bin
@@ -41,11 +42,7 @@ bin/
 
 README\.txt
 
-hex\.todo
-
 LICENSE-new\.txt
-
-forge-1\.12\.2-14\.23\.3\.2655-changelog\.txt
 
 CREDITS-fml\.txt
 
