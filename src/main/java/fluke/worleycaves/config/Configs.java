@@ -46,6 +46,18 @@ public class Configs
 		@Config.Comment({"Caves will not attempt to generate above this y level. Range 1-256", "Default: 128"})
 		@Config.RequiresWorldRestart
 		public int maxCaveHeight = 128;
+		
+		@Config.Comment({"Caves will not attempt to generate below this y level. Range 1-256", "Default: 1"})
+		@Config.RequiresWorldRestart
+		public int minCaveHeight = 1;
+		
+		@Config.Comment({"Block to use when generating large lava lakes below lavaDepth (usually y=10)", "Default: minecraft:lava"})
+		@Config.RequiresWorldRestart
+		public String lavaBlock = "minecraft:lava";
+		
+		@Config.Comment({"Air blocks at or below this y level will generate as lavaBlock", "Default: 10"})
+		@Config.RequiresWorldRestart
+		public int lavaDepth = 10;
 	}
 	
 	@SubscribeEvent

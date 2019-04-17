@@ -2,7 +2,9 @@ package fluke.worleycaves.world;
 
 import com.google.common.base.MoreObjects;
 
+import fluke.worleycaves.Main;
 import fluke.worleycaves.config.Configs;
+import fluke.worleycaves.util.BlockUtil;
 import fluke.worleycaves.util.FastNoise;
 import fluke.worleycaves.util.WorleyUtil;
 import net.minecraft.block.material.Material;
@@ -14,6 +16,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.MapGenCaves;
+import net.minecraftforge.fml.common.Loader;
 
 public class WorleyCaveGenerator extends MapGenCaves
 {
@@ -28,15 +31,18 @@ public class WorleyCaveGenerator extends MapGenCaves
 	
 	
 	
-	private static final IBlockState LAVA = Blocks.LAVA.getDefaultState();
+	private static IBlockState lava;
 	private static final IBlockState AIR = Blocks.AIR.getDefaultState();
 	private static int maxCaveHeight;
+	private static int minCaveHeight;
 	private static float noiseCutoff;
 	private static float warpAmplifier;
 	private static float easeInDepth;
 	private static float yCompression;
 	private static float xzCompression;
 	private static float surfaceCutoff;
+	private static int lavaDepth;
+	private static boolean additionalWaterChecks;
 
 	
 	
@@ -49,12 +55,23 @@ public class WorleyCaveGenerator extends MapGenCaves
 		displacementNoisePerlin.SetFrequency(0.05f);
 		
 		maxCaveHeight = Configs.cavegen.maxCaveHeight;
+		minCaveHeight = Configs.cavegen.minCaveHeight;
 		noiseCutoff = (float) Configs.cavegen.noiseCutoffValue;
 		warpAmplifier = (float) Configs.cavegen.warpAmplifier;
 		easeInDepth = (float) Configs.cavegen.easeInDepth;
 		yCompression = (float) Configs.cavegen.verticalCompressionMultiplier;
 		xzCompression = (float) Configs.cavegen.horizonalCompressionMultiplier;
 		surfaceCutoff = (float) Configs.cavegen.surfaceCutoffValue;
+		lavaDepth = Configs.cavegen.lavaDepth;
+		additionalWaterChecks = Loader.isModLoaded("subterranaenwaters");
+			
+		
+		lava = BlockUtil.getStateFromString(Configs.cavegen.lavaBlock);
+		if(lava == null)
+		{
+			Main.LOGGER.error("Cannont find block " + Configs.cavegen.lavaBlock);
+			lava = AIR;
+		}
 		
 		//try and grab other modded cave gens, like swiss cheese caves or Quark big caves
 		//our replace cavegen event will ignore cave events when the original cave class passed in is a Worley cave
@@ -215,13 +232,19 @@ public class WorleyCaveGenerator extends MapGenCaves
 
                             	}
                             	
+                            	//increase cutoff as we get closer to the minCaveHeight so it's not all flat floors
+                            	if(localY < (minCaveHeight+5))
+                            	{
+                            		adjustedNoiseCutoff += ((minCaveHeight+5)-localY) * 0.05;
+                            	}
+                            	
             					if (noiseVal > adjustedNoiseCutoff)
             					{
             						IBlockState aboveBlock = (IBlockState) MoreObjects.firstNonNull(chunkPrimerIn.getBlockState(localX, localY+1, localZ), Blocks.AIR.getDefaultState());
             						if(aboveBlock.getMaterial() != Material.WATER)
             						{
-            							//if we are in the easeInDepth range or above sea level, do some extra checks for water before digging
-            							if(depth < easeInDepth || localY > (seaLevel - 8)) 
+            							//if we are in the easeInDepth range or near sea level or subH2O is installed, do some extra checks for water before digging
+            							if((depth < easeInDepth || localY > (seaLevel - 8) || additionalWaterChecks) && localY > lavaDepth) 
             							{
             								if(localX < 15)
             									if(chunkPrimerIn.getBlockState(localX+1, localY, localZ).getMaterial() == Material.WATER)
@@ -279,7 +302,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 				for(int y = 128; y >= 0; y--)
 				{
 					float realY = y*2;
-					if(realY > maxSurfaceHeight || realY > maxCaveHeight)
+					if(realY > maxSurfaceHeight || realY > maxCaveHeight || realY < minCaveHeight)
 					{
 						//if outside of valid cave range set noise value below normal minimum of -1.0
 						noiseSamples[x][y][z] = -1.1F;
@@ -417,13 +440,13 @@ public class WorleyCaveGenerator extends MapGenCaves
 
         if (this.canReplaceBlock(state, up) || state.getBlock() == top.getBlock() || state.getBlock() == filler.getBlock())
         {
-            if (y - 1 < 10)
+            if (y <= lavaDepth)
             {
-                data.setBlockState(x, y, z, BLK_LAVA);
+                data.setBlockState(x, y, z, lava);
             }
             else
             {
-                data.setBlockState(x, y, z, BLK_AIR);
+                data.setBlockState(x, y, z, AIR);
 
                 if (foundTop && data.getBlockState(x, y - 1, z).getBlock() == filler.getBlock())
                 {
