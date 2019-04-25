@@ -6,6 +6,7 @@ import fluke.worleycaves.Main;
 import fluke.worleycaves.config.Configs;
 import fluke.worleycaves.util.BlockUtil;
 import fluke.worleycaves.util.FastNoise;
+import fluke.worleycaves.util.ThreadedNoiseManager;
 import fluke.worleycaves.util.WorleyUtil;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -106,7 +107,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		}
 		
 		debugValueAdjustments();
-		boolean logTime = false;
+		boolean logTime = true; //SET ME BACK TO FALSE TODO
 		long millis = 0;
 		if(logTime)
 		{
@@ -134,7 +135,8 @@ public class WorleyCaveGenerator extends MapGenCaves
     {
 		int chunkMaxHeight = getMaxSurfaceHeight(chunkPrimerIn);
 		int seaLevel = worldIn.getSeaLevel();
-		float[][][] samples = sampleNoise(chunkX, chunkZ, chunkMaxHeight+1);
+//		float[][][] samples = sampleNoise(chunkX, chunkZ, chunkMaxHeight+1);
+		float[][][] samples = new ThreadedNoiseManager().getNoiseSamples(chunkX, chunkZ,  chunkMaxHeight+1);
         float oneQuarter = 0.25F;
         float oneHalf = 0.5F;
         //float cutoffAdjuster = 0F; //TODO one day, perlin adjustments to cutoff
@@ -310,6 +312,8 @@ public class WorleyCaveGenerator extends MapGenCaves
 					}
 					else
 					{
+//						if(realY>60)
+//							System.out.println(".");
 						//Experiment making the cave system more chaotic the more you descend 
 						///TODO might be too dramatic down at lava level
 						float dispAmp = (float) (warpAmplifier * ((originalMaxHeight-y)/(originalMaxHeight*0.85)));
