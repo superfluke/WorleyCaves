@@ -17,23 +17,20 @@ public class ThreadedNoiseSegment implements Runnable
 	private int maxSurfaceHeight;
 	private int yLevel;
 	private int numLayers;
-	private ThreadedNoiseManager manager;
-	private WorleyUtil worleyF1divF3;// = new WorleyUtil();
+	private WorleyUtil worleyF1divF3;
 
 	static
 	{
 		updateConfigVals();
 	}
 
-	public ThreadedNoiseSegment(int chunkX, int chunkZ, int yLevel, int numLayers, int maxHeight, ThreadedNoiseManager manager, WorleyUtil worleyF1divF3)
+	public ThreadedNoiseSegment(int chunkX, int chunkZ, int yLevel, int numLayers, int maxHeight, WorleyUtil worleyF1divF3)
 	{
 		this.chunkX = chunkX;
 		this.chunkZ = chunkZ;
 		this.yLevel = yLevel;
 		this.numLayers = numLayers;
 		this.maxSurfaceHeight = maxHeight;
-		this.manager = manager;
-//		worleyF1divF3.SetFrequency(0.016f);
 		this.worleyF1divF3 = worleyF1divF3;
 	}
 	
@@ -49,9 +46,7 @@ public class ThreadedNoiseSegment implements Runnable
 			for (int z = 0; z < ThreadedNoiseManager.Z_SAMPLE_SIZE; z++)
 			{
 				int realZ = z*4 + chunkZ*16;
-				
-				//loop from top down for y values so we can adjust noise above current y later on
-				//for(int y = 128; y >= 0; y--)
+
 				for(int y = 0; y < numLayers; y++)
 				{
 					if(y + yLevel >= ThreadedNoiseManager.Y_SAMPLE_SIZE)
@@ -65,8 +60,6 @@ public class ThreadedNoiseSegment implements Runnable
 					}
 					else
 					{
-//						if(realY>60)
-//							System.out.println(".");
 						//Experiment making the cave system more chaotic the more you descend 
 						///TODO might be too dramatic down at lava level
 						float dispAmp = (float) (warpAmplifier * ((originalMaxHeight - (y + yLevel)) / (originalMaxHeight * 0.85)));
@@ -78,12 +71,8 @@ public class ThreadedNoiseSegment implements Runnable
 						xDisp = ThreadedNoiseManager.displacementNoisePerlin.GetNoise(realX, realY, realZ)*dispAmp;
 						yDisp = ThreadedNoiseManager.displacementNoisePerlin.GetNoise(realX, realY-256.0f, realZ)*dispAmp;
 						zDisp = ThreadedNoiseManager.displacementNoisePerlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
-//						xDisp = displacementNoisePerlin.GetNoise(realX, realY, realZ)*dispAmp;
-//						yDisp = displacementNoisePerlin.GetNoise(realX, realY-256.0f, realZ)*dispAmp;
-//						zDisp = displacementNoisePerlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
 
 						//doubling the y frequency to get some more caves
-//						noise = ThreadedNoiseManager.worleyF1divF3.SingleCellular3Edge(realX*xzCompression+xDisp, realY*yCompression+yDisp, realZ*xzCompression+zDisp);
 						noise = worleyF1divF3.SingleCellular3Edge(realX*xzCompression+xDisp, realY*yCompression+yDisp, realZ*xzCompression+zDisp);
 						segmentSamples[x][y][z] = noise;
 						
@@ -104,7 +93,7 @@ public class ThreadedNoiseSegment implements Runnable
 			}
 		}
 
-		manager.mergeSegmentNoise(segmentSamples, yLevel, numLayers);
+		ThreadedNoiseManager.mergeSegmentNoise(segmentSamples, yLevel, numLayers);
 	}
 
 	public static void updateConfigVals()

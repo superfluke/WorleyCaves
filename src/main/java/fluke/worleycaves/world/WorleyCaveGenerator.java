@@ -136,7 +136,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		int chunkMaxHeight = getMaxSurfaceHeight(chunkPrimerIn);
 		int seaLevel = worldIn.getSeaLevel();
 //		float[][][] samples = sampleNoise(chunkX, chunkZ, chunkMaxHeight+1);
-		float[][][] samples = new ThreadedNoiseManager().getNoiseSamples(chunkX, chunkZ,  chunkMaxHeight+1);
+		float[][][] samples = ThreadedNoiseManager.getNoiseSamples(chunkX, chunkZ,  chunkMaxHeight+1);
         float oneQuarter = 0.25F;
         float oneHalf = 0.5F;
         //float cutoffAdjuster = 0F; //TODO one day, perlin adjustments to cutoff

@@ -20,11 +20,10 @@ public class ThreadedNoiseManager
 	public static FastNoise displacementNoisePerlin = new FastNoise();
 	
 	
-	private float[][][] noiseSamples = new float[X_SAMPLE_SIZE][Y_SAMPLE_SIZE][Z_SAMPLE_SIZE];
+	private static float[][][] noiseSamples = new float[X_SAMPLE_SIZE][Y_SAMPLE_SIZE][Z_SAMPLE_SIZE];
 	
 	static 
 	{
-//		worleyF1divF3.SetFrequency(0.016f);
 		for(int w = 0; w < worleyArray.length; w++)
 		{
 			worleyArray[w] = new WorleyUtil();
@@ -35,13 +34,13 @@ public class ThreadedNoiseManager
 		executor = java.util.concurrent.Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 	}
 	
-	public float[][][] getNoiseSamples(int chunkX, int chunkZ, int maxSurfaceHeight) 
+	public static float[][][] getNoiseSamples(int chunkX, int chunkZ, int maxSurfaceHeight) 
 	{
 		List<Callable<?>> threads = new ArrayList<Callable<?>>();
 
 		int numThreads = (int)Math.ceil(Y_SAMPLE_SIZE/(double)LAYERS_PER_THREAD);
 		for(int n = 0; n < numThreads; n++)
-			threads.add(Executors.callable(new ThreadedNoiseSegment(chunkX, chunkZ, n * LAYERS_PER_THREAD, LAYERS_PER_THREAD, maxSurfaceHeight, this, worleyArray[n])));
+			threads.add(Executors.callable(new ThreadedNoiseSegment(chunkX, chunkZ, n * LAYERS_PER_THREAD, LAYERS_PER_THREAD, maxSurfaceHeight, worleyArray[n])));
 
 		try
 		{
@@ -52,11 +51,10 @@ public class ThreadedNoiseManager
 		}
 		
 		addHeadRoom();
-		//System.out.println(Arrays.deepToString(noiseSamples));
 		return noiseSamples;
 	}
 	
-	public synchronized void mergeSegmentNoise(float[][][] threadSamples, int yLevel, int numLayers)
+	public static synchronized void mergeSegmentNoise(float[][][] threadSamples, int yLevel, int numLayers)
 	{
 		for(int x = 0; x < X_SAMPLE_SIZE; x++)
 		{
@@ -73,7 +71,7 @@ public class ThreadedNoiseManager
 		}
 	}
 	
-	private void addHeadRoom()
+	private static void addHeadRoom()
 	{
 		for(int x = 0; x < X_SAMPLE_SIZE; x++)
 		{
