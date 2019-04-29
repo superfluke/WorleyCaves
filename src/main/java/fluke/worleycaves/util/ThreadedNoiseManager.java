@@ -12,30 +12,36 @@ public class ThreadedNoiseManager
 {
 	
 	private static ExecutorService executor;
-//	public static WorleyUtil worleyF1divF3 = new WorleyUtil();
-//	public static FastNoise displacementNoisePerlin = new FastNoise();
+	private static final int LAYERS_PER_THREAD = 16;
 	public static final int X_SAMPLE_SIZE = 5;
 	public static final int Y_SAMPLE_SIZE = 129;
 	public static final int Z_SAMPLE_SIZE = 5;
+	public static WorleyUtil[] worleyArray = new WorleyUtil[(int) Math.ceil((double)Y_SAMPLE_SIZE/LAYERS_PER_THREAD)];
+	public static FastNoise displacementNoisePerlin = new FastNoise();
+	
 	
 	private float[][][] noiseSamples = new float[X_SAMPLE_SIZE][Y_SAMPLE_SIZE][Z_SAMPLE_SIZE];
 	
 	static 
 	{
 //		worleyF1divF3.SetFrequency(0.016f);
-//		displacementNoisePerlin.SetNoiseType(FastNoise.NoiseType.Perlin);
-//		displacementNoisePerlin.SetFrequency(0.05f);
+		for(int w = 0; w < worleyArray.length; w++)
+		{
+			worleyArray[w] = new WorleyUtil();
+			worleyArray[w].SetFrequency(0.016f);
+		}
+		displacementNoisePerlin.SetNoiseType(FastNoise.NoiseType.Perlin);
+		displacementNoisePerlin.SetFrequency(0.05f);
 		executor = java.util.concurrent.Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 	}
 	
 	public float[][][] getNoiseSamples(int chunkX, int chunkZ, int maxSurfaceHeight) 
 	{
 		List<Callable<?>> threads = new ArrayList<Callable<?>>();
-		int layersPerThread = 16;
 
-		int numThreads = (int)Math.ceil(Y_SAMPLE_SIZE/(double)layersPerThread);
+		int numThreads = (int)Math.ceil(Y_SAMPLE_SIZE/(double)LAYERS_PER_THREAD);
 		for(int n = 0; n < numThreads; n++)
-			threads.add(Executors.callable(new ThreadedNoiseSegment(chunkX, chunkZ, n * layersPerThread, layersPerThread, maxSurfaceHeight, this)));
+			threads.add(Executors.callable(new ThreadedNoiseSegment(chunkX, chunkZ, n * LAYERS_PER_THREAD, LAYERS_PER_THREAD, maxSurfaceHeight, this, worleyArray[n])));
 
 		try
 		{

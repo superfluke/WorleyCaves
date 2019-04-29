@@ -18,16 +18,14 @@ public class ThreadedNoiseSegment implements Runnable
 	private int yLevel;
 	private int numLayers;
 	private ThreadedNoiseManager manager;
-	private  WorleyUtil worleyF1divF3 = new WorleyUtil();
-	private  FastNoise displacementNoisePerlin = new FastNoise();
+	private WorleyUtil worleyF1divF3;// = new WorleyUtil();
 
 	static
 	{
 		updateConfigVals();
 	}
 
-	public ThreadedNoiseSegment(int chunkX, int chunkZ, int yLevel, int numLayers, int maxHeight,
-			ThreadedNoiseManager manager)
+	public ThreadedNoiseSegment(int chunkX, int chunkZ, int yLevel, int numLayers, int maxHeight, ThreadedNoiseManager manager, WorleyUtil worleyF1divF3)
 	{
 		this.chunkX = chunkX;
 		this.chunkZ = chunkZ;
@@ -35,9 +33,8 @@ public class ThreadedNoiseSegment implements Runnable
 		this.numLayers = numLayers;
 		this.maxSurfaceHeight = maxHeight;
 		this.manager = manager;
-		worleyF1divF3.SetFrequency(0.016f);
-		displacementNoisePerlin.SetNoiseType(FastNoise.NoiseType.Perlin);
-		displacementNoisePerlin.SetFrequency(0.05f);
+//		worleyF1divF3.SetFrequency(0.016f);
+		this.worleyF1divF3 = worleyF1divF3;
 	}
 	
 	@Override
@@ -78,12 +75,12 @@ public class ThreadedNoiseSegment implements Runnable
 						float yDisp = 0f;
 						float zDisp = 0f;
 						
-//						xDisp = ThreadedNoiseManager.displacementNoisePerlin.GetNoise(realX, realY, realZ)*dispAmp;
-//						yDisp = ThreadedNoiseManager.displacementNoisePerlin.GetNoise(realX, realY-256.0f, realZ)*dispAmp;
-//						zDisp = ThreadedNoiseManager.displacementNoisePerlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
-						xDisp = displacementNoisePerlin.GetNoise(realX, realY, realZ)*dispAmp;
-						yDisp = displacementNoisePerlin.GetNoise(realX, realY-256.0f, realZ)*dispAmp;
-						zDisp = displacementNoisePerlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
+						xDisp = ThreadedNoiseManager.displacementNoisePerlin.GetNoise(realX, realY, realZ)*dispAmp;
+						yDisp = ThreadedNoiseManager.displacementNoisePerlin.GetNoise(realX, realY-256.0f, realZ)*dispAmp;
+						zDisp = ThreadedNoiseManager.displacementNoisePerlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
+//						xDisp = displacementNoisePerlin.GetNoise(realX, realY, realZ)*dispAmp;
+//						yDisp = displacementNoisePerlin.GetNoise(realX, realY-256.0f, realZ)*dispAmp;
+//						zDisp = displacementNoisePerlin.GetNoise(realX, realY-512.0f, realZ)*dispAmp;
 
 						//doubling the y frequency to get some more caves
 //						noise = ThreadedNoiseManager.worleyF1divF3.SingleCellular3Edge(realX*xzCompression+xDisp, realY*yCompression+yDisp, realZ*xzCompression+zDisp);
