@@ -11,11 +11,12 @@ import fluke.worleycaves.config.Configs;
 public class ThreadedNoiseManager 
 {
 	
-	private static ExecutorService executor;
-	private static final int LAYERS_PER_THREAD = 16;
 	public static final int X_SAMPLE_SIZE = 5;
 	public static final int Y_SAMPLE_SIZE = 129;
 	public static final int Z_SAMPLE_SIZE = 5;
+	private static ExecutorService executor;
+	private static final int LAYERS_PER_THREAD = 16;
+	public static final int NUM_THREADS = (int) Math.ceil(Y_SAMPLE_SIZE/(double)LAYERS_PER_THREAD);
 	public static WorleyUtil[] worleyArray = new WorleyUtil[(int) Math.ceil((double)Y_SAMPLE_SIZE/LAYERS_PER_THREAD)];
 	public static FastNoise displacementNoisePerlin = new FastNoise();
 	
@@ -38,9 +39,8 @@ public class ThreadedNoiseManager
 	{
 		List<Callable<?>> threads = new ArrayList<Callable<?>>();
 
-		int numThreads = (int)Math.ceil(Y_SAMPLE_SIZE/(double)LAYERS_PER_THREAD);
-		for(int n = 0; n < numThreads; n++)
-			threads.add(Executors.callable(new ThreadedNoiseSegment(chunkX, chunkZ, n * LAYERS_PER_THREAD, LAYERS_PER_THREAD, maxSurfaceHeight, worleyArray[n])));
+		for(int n = 0; n < NUM_THREADS; n++)
+			threads.add(Executors.callable(new ThreadedNoiseSegment(chunkX, chunkZ, n, LAYERS_PER_THREAD, maxSurfaceHeight, worleyArray[n])));
 
 		try
 		{
@@ -62,10 +62,10 @@ public class ThreadedNoiseManager
 			{
 				for(int y = 0; y < numLayers; y++)
 				{
-					if(y + yLevel >= Y_SAMPLE_SIZE)
+					if(yLevel + y*NUM_THREADS >= Y_SAMPLE_SIZE)
 						continue;
 					
-					noiseSamples[x][y + yLevel][z] = threadSamples[x][y][z];
+					noiseSamples[x][yLevel + y*NUM_THREADS][z] = threadSamples[x][y][z];
 				}
 			}
 		}

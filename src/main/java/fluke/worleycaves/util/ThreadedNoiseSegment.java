@@ -49,10 +49,11 @@ public class ThreadedNoiseSegment implements Runnable
 
 				for(int y = 0; y < numLayers; y++)
 				{
-					if(y + yLevel >= ThreadedNoiseManager.Y_SAMPLE_SIZE)
+					int currentLayer = yLevel + y*ThreadedNoiseManager.NUM_THREADS;
+					if(currentLayer >= ThreadedNoiseManager.Y_SAMPLE_SIZE)
 						continue;
 					
-					float realY = (y + yLevel)*2;
+					float realY = (currentLayer)*2;
 					if(realY > maxSurfaceHeight || realY > maxCaveHeight || realY < minCaveHeight)
 					{
 						//if outside of valid cave range set noise value below normal minimum of -1.0
@@ -62,7 +63,7 @@ public class ThreadedNoiseSegment implements Runnable
 					{
 						//Experiment making the cave system more chaotic the more you descend 
 						///TODO might be too dramatic down at lava level
-						float dispAmp = (float) (warpAmplifier * ((originalMaxHeight - (y + yLevel)) / (originalMaxHeight * 0.85)));
+						float dispAmp = (float) (warpAmplifier * ((originalMaxHeight - (currentLayer)) / (originalMaxHeight * 0.85)));
 						
 						float xDisp = 0f;
 						float yDisp = 0f;
