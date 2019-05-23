@@ -95,6 +95,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 	public void generate(World worldIn, int x, int z, ChunkPrimer primer)
 	{
 		int currentDim = worldIn.provider.getDimension();
+		this.world = worldIn;
 		//revert to vanilla cave generation for blacklisted dims
 		for(int blacklistedDim: Configs.cavegen.blackListedDims)
 		{

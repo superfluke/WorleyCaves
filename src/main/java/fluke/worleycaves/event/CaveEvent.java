@@ -14,7 +14,7 @@ public class CaveEvent
 		//only replace cave gen if the original gen passed isn't a worley cave
 		if (event.getType() == InitMapGenEvent.EventType.CAVE && !event.getOriginalGen().getClass().equals(WorleyCaveGenerator.class))
 	    {
-			Main.LOGGER.info("Replacing cave generation with Worley Caves");
+			//Main.LOGGER.info("Replacing cave generation with Worley Caves");
 	        event.setNewGen(new WorleyCaveGenerator());
 	    }
 	}
