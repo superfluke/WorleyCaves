@@ -425,6 +425,13 @@ public class WorleyCaveGenerator extends MapGenCaves
         if (biome == net.minecraft.init.Biomes.DESERT) return true;
         return false;
     }
+
+    @Override
+    protected boolean canReplaceBlock(IBlockState state, IBlockState stateUp)
+    {
+        // Need to be able to replace not just vanilla stone + stuff
+        return (Configs.cavegen.allowReplaceMoreBlocks && state.getMaterial() == Material.ROCK) || super.canReplaceBlock(state, stateUp);
+    }
     
     /**
      * Digs out the current block, default implementation removes stone, filler, and top block
