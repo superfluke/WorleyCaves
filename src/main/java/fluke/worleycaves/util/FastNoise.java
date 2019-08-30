@@ -607,7 +607,7 @@ public class FastNoise {
 			new Float3(-0.2016773589f, 0.008816271194f, -0.4021797064f),
 			new Float3(-0.07527055435f, -0.425643481f, -0.1251477955f), };
 
-	private static int FastFloor(float f)
+	public static int FastFloor(float f)
 	{
 		return (f >= 0 ? (int) f : (int) f - 1);
 	}
@@ -2431,9 +2431,19 @@ public class FastNoise {
 
 						float newDistance = vecX * vecX + vecY * vecY + vecZ * vecZ;
 
-						distance3 = Math.max(Math.min(distance3, newDistance), distance2);
-						distance2 = Math.max(Math.min(distance2, newDistance), distance1);
-						distance1 = Math.min(distance1, newDistance);
+						if (newDistance < distance1)
+						{
+							distance3 = distance2;
+							distance2 = distance1;
+							distance1 = newDistance;
+						} else if (newDistance < distance2)
+						{
+							distance3 = distance2;
+							distance2 = newDistance;
+						} else if (newDistance < distance3)
+						{
+							distance3 = newDistance;
+						}
 					}
 				}
 			}
@@ -2453,9 +2463,19 @@ public class FastNoise {
 
 						float newDistance = Math.abs(vecX) + Math.abs(vecY) + Math.abs(vecZ);
 
-						distance3 = Math.max(Math.min(distance3, newDistance), distance2);
-						distance2 = Math.max(Math.min(distance2, newDistance), distance1);
-						distance1 = Math.min(distance1, newDistance);
+						if (newDistance < distance1)
+						{
+							distance3 = distance2;
+							distance2 = distance1;
+							distance1 = newDistance;
+						} else if (newDistance < distance2)
+						{
+							distance3 = distance2;
+							distance2 = newDistance;
+						} else if (newDistance < distance3)
+						{
+							distance3 = newDistance;
+						}
 					}
 				}
 			}
@@ -2476,9 +2496,19 @@ public class FastNoise {
 						float newDistance = (Math.abs(vecX) + Math.abs(vecY) + Math.abs(vecZ))
 								+ (vecX * vecX + vecY * vecY + vecZ * vecZ);
 
-						distance3 = Math.max(Math.min(distance3, newDistance), distance2);
-						distance2 = Math.max(Math.min(distance2, newDistance), distance1);
-						distance1 = Math.min(distance1, newDistance);
+						if (newDistance < distance1)
+						{
+							distance3 = distance2;
+							distance2 = distance1;
+							distance1 = newDistance;
+						} else if (newDistance < distance2)
+						{
+							distance3 = distance2;
+							distance2 = newDistance;
+						} else if (newDistance < distance3)
+						{
+							distance3 = newDistance;
+						}
 					}
 				}
 			}

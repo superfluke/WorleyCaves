@@ -301,17 +301,18 @@ public class WorleyUtil {
 	
 	// Modified version of "SingleCellular2Edge(x, y, z)" from FastNoise
 	// Adds the third distance value for use and trying to make it even faster
-	float[] dists = new float[27];
 	public float SingleCellular3Edge(float x, float y, float z) {
 		x *= m_frequency;
 		y *= m_frequency;
 		z *= m_frequency;
 		
-		int xr = (int) Math.floor(x);
-		int yr = (int) Math.floor(y);
-		int zr = (int) Math.floor(z);
+		int xr = FastNoise.FastFloor(x);
+		int yr = FastNoise.FastFloor(y);
+		int zr = FastNoise.FastFloor(z);
 		
-		int i = 0;
+		float distance1 = 999999;
+		float distance2 = 999999;
+		float distance3 = 999999;
 		
 		for (int xi = xr-1; xi <= xr+1; xi++)
 		{
@@ -327,21 +328,23 @@ public class WorleyUtil {
 
 					float newDistance = vecX * vecX + vecY * vecY + vecZ * vecZ;
 					
-					dists[i++] = newDistance;
+					if (newDistance < distance1)
+					{
+						distance3 = distance2;
+						distance2 = distance1;
+						distance1 = newDistance;
+					} else if (newDistance < distance2)
+					{
+						distance3 = distance2;
+						distance2 = newDistance;
+					} else if (newDistance < distance3)
+					{
+						distance3 = newDistance;
+					}
 				}
 			}
 		}
-		
-		for(int k = 0; k < 3; k++) {
-			for(int j = 26; j > k; j--) {
-				if(dists[j] < dists[j-1]) {
-					float d = dists[j-1];
-					dists[j-1] = dists[j];
-					dists[j] = d;
-				}
-			}
-		}
-		
-		return dists[0] / dists[2] - 1;
+			
+		return distance1 / distance3 - 1;
 	}
 }
