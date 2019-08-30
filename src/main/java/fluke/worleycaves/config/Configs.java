@@ -58,6 +58,10 @@ public class Configs
 		@Config.Comment({"Air blocks at or below this y level will generate as lavaBlock", "Default: 10"})
 		@Config.RequiresWorldRestart
 		public int lavaDepth = 10;
+
+		@Config.Comment({"Allow replacing more blocks with caves (useful for mods which completely overwrite world gen)"})
+		@Config.RequiresWorldRestart
+		public boolean allowReplaceMoreBlocks = true;
 	}
 	
 	@SubscribeEvent
