@@ -139,7 +139,6 @@ public class WorleyCaveGenerator extends MapGenCaves
         float oneQuarter = 0.25F;
         float oneHalf = 0.5F;
         //float cutoffAdjuster = 0F; //TODO one day, perlin adjustments to cutoff
-        IBlockState holeFiller;
         
 		//each chunk divided into 4 subchunks along X axis
 		for (int x = 0; x < 4; x++)

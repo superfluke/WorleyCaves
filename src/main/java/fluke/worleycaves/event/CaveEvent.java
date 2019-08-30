@@ -1,6 +1,5 @@
 package fluke.worleycaves.event;
 
-import fluke.worleycaves.Main;
 import fluke.worleycaves.world.WorleyCaveGenerator;
 import net.minecraftforge.event.terraingen.InitMapGenEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;

@@ -7,6 +7,7 @@ public class BlockUtil
 {
 	//returns state from string with format of mod:block:meta with meta being optional
 	//may return null
+	@SuppressWarnings("deprecation")
 	public static IBlockState getStateFromString(String block)
 	{
 		String[] splitty = block.split(":");
