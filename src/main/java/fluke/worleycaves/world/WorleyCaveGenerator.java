@@ -7,6 +7,8 @@ import fluke.worleycaves.config.Configs;
 import fluke.worleycaves.util.BlockUtil;
 import fluke.worleycaves.util.FastNoise;
 import fluke.worleycaves.util.WorleyUtil;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -17,6 +19,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.MapGenCaves;
+import net.minecraftforge.fluids.IFluidBlock;
 import net.minecraftforge.fml.common.Loader;
 
 public class WorleyCaveGenerator extends MapGenCaves
@@ -242,22 +245,22 @@ public class WorleyCaveGenerator extends MapGenCaves
             					if (noiseVal > adjustedNoiseCutoff)
             					{
             						IBlockState aboveBlock = (IBlockState) MoreObjects.firstNonNull(chunkPrimerIn.getBlockState(localX, localY+1, localZ), Blocks.AIR.getDefaultState());
-            						if(aboveBlock.getMaterial() != Material.WATER)
+            						if(!isFluidBlock(aboveBlock))
             						{
             							//if we are in the easeInDepth range or near sea level or subH2O is installed, do some extra checks for water before digging
             							if((depth < easeInDepth || localY > (seaLevel - 8) || additionalWaterChecks) && localY > lavaDepth) 
             							{
             								if(localX < 15)
-            									if(chunkPrimerIn.getBlockState(localX+1, localY, localZ).getMaterial() == Material.WATER)
+            									if(isFluidBlock(chunkPrimerIn.getBlockState(localX+1, localY, localZ)))
             										continue;
             								if(localX > 0)
-            									if(chunkPrimerIn.getBlockState(localX-1, localY, localZ).getMaterial() == Material.WATER)
+            									if(isFluidBlock(chunkPrimerIn.getBlockState(localX-1, localY, localZ)))
             										continue;
             								if(localZ < 15)
-            									if(chunkPrimerIn.getBlockState(localX, localY, localZ+1).getMaterial() == Material.WATER)
+            									if(isFluidBlock(chunkPrimerIn.getBlockState(localX, localY, localZ+1)))
             										continue;
             								if(localZ > 0)
-            									if(chunkPrimerIn.getBlockState(localX, localY, localZ-1).getMaterial() == Material.WATER)
+            									if(isFluidBlock(chunkPrimerIn.getBlockState(localX, localY, localZ-1)))
             										continue;
             							}
 	            						IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
@@ -405,6 +408,13 @@ public class WorleyCaveGenerator extends MapGenCaves
 	{
 		Biome biome = world.getBiome(new BlockPos(realX, 0, realZ));
 		return state == biome.topBlock || state == biome.fillerBlock;
+	}
+	
+	//returns true if block is fluid, trying to play nice with modded liquid
+	private boolean isFluidBlock(IBlockState state)
+	{
+		Block blocky = state.getBlock();
+		return blocky instanceof BlockLiquid || blocky instanceof IFluidBlock;
 	}
 	
 	//Because it's private in MapGenCaves this is reimplemented
