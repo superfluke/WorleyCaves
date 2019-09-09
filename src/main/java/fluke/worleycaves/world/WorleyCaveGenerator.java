@@ -245,7 +245,7 @@ public class WorleyCaveGenerator extends MapGenCaves
             					if (noiseVal > adjustedNoiseCutoff)
             					{
             						IBlockState aboveBlock = (IBlockState) MoreObjects.firstNonNull(chunkPrimerIn.getBlockState(localX, localY+1, localZ), Blocks.AIR.getDefaultState());
-            						if(!isFluidBlock(aboveBlock))
+            						if(!isFluidBlock(aboveBlock) || localY <= lavaDepth)
             						{
             							//if we are in the easeInDepth range or near sea level or subH2O is installed, do some extra checks for water before digging
             							if((depth < easeInDepth || localY > (seaLevel - 8) || additionalWaterChecks) && localY > lavaDepth) 
