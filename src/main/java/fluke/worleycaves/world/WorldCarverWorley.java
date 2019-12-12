@@ -28,8 +28,8 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	int currentTimeIndex = 0;
 	double sum = 0;
 
-	private WorleyUtil worleyF1divF3 = new WorleyUtil();
-	private FastNoise displacementNoisePerlin = new FastNoise();
+	private WorleyUtil worleyF1divF3;
+	private FastNoise displacementNoisePerlin;
 
 	private static final BlockState LAVA = Blocks.LAVA.getDefaultState();
 	private static final BlockState AIR = Blocks.AIR.getDefaultState();
@@ -48,8 +48,24 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	{
 		super(p_i49929_1_, p_i49929_2_);
 
-		worleyF1divF3.SetFrequency(0.016f);
+	}
 
+	private void debugValueAdjustments()
+	{
+		// lavaDepth = 10;
+		// noiseCutoff = 0.18F;
+		// warpAmplifier = 8.0F;
+		// easeInDepth = 15;
+	}
+	
+	public void init(long worldSeed)
+	{
+		//TODO does this break if seed is > max int?
+		
+		worleyF1divF3 = new WorleyUtil((int) worldSeed);
+		worleyF1divF3.SetFrequency(0.016f);
+		
+		displacementNoisePerlin = new FastNoise((int) worldSeed);
 		displacementNoisePerlin.SetNoiseType(FastNoise.NoiseType.Perlin);
 		displacementNoisePerlin.SetFrequency(0.05f);
 
@@ -62,25 +78,17 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		xzCompression = 1.0f;
 		surfaceCutoff = -0.081f;
 		lavaDepth = 10;
-	}
-
-	private void debugValueAdjustments()
-	{
-		// lavaDepth = 10;
-		// noiseCutoff = 0.18F;
-		// warpAmplifier = 8.0F;
-		// easeInDepth = 15;
+		
 	}
 
 	@Override
-	public boolean carve(IChunk chunkIn, Random rand, int seaLevel, int chunkX, int chunkZ, int chunkXOffset,
-			int chunkZOffset, BitSet carvingMask, ProbabilityConfig config)
+	public boolean carve(IChunk chunkIn, Random rand, int seaLevel, int chunkX, int chunkZ, int chunkXOffset, int chunkZOffset, BitSet carvingMask, ProbabilityConfig config)
 	{
 		if (chunkXOffset != chunkX || chunkZOffset != chunkZ)
 			return false;
 
 		debugValueAdjustments();
-		boolean logTime = true;
+		boolean logTime = true; //TODO turn off
 		long millis = 0;
 		if (logTime)
 		{
@@ -475,5 +483,4 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 			}
 		}
 	}
-
 }

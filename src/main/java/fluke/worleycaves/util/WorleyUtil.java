@@ -1,8 +1,19 @@
 package fluke.worleycaves.util;
 
 public class WorleyUtil {
-	private int m_seed = 1337;
+	private int m_seed;
+	
 	private float m_frequency = (float) 0.01;
+	
+	public WorleyUtil()
+	{
+		m_seed = 1337;
+	}
+	
+	public WorleyUtil(int seed)
+	{
+		m_seed = seed;
+	}
 	
 	/**
 	 * Sets frequency for all noise types<br>
