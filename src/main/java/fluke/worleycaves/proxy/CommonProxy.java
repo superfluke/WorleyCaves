@@ -2,6 +2,8 @@ package fluke.worleycaves.proxy;
 
 import java.util.function.Consumer;
 
+import fluke.worleycaves.config.ConfigHelper;
+import fluke.worleycaves.config.ConfigHolder;
 import fluke.worleycaves.world.WorldCarverWorley;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.GenerationStage;
@@ -10,6 +12,7 @@ import net.minecraft.world.gen.feature.ProbabilityConfig;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -34,6 +37,7 @@ public class CommonProxy
 	
 	public void registerListeners(IEventBus fmlBus, IEventBus forgeBus) 
 	{
+		fmlBus.addListener(this::configChanged);
         fmlBus.addListener(this::commonSetup);
 
         forgeBus.addListener(this::worldLoad);
@@ -57,6 +61,19 @@ public class CommonProxy
 				b.getCarvers(GenerationStage.Carving.LIQUID).add(configuredWorleyCarver);
 			}
 		});
+	}
+	
+	public void configChanged(ModConfig.ModConfigEvent event)
+	{
+		final ModConfig config = event.getConfig();
+		// Rebake the configs when they change
+		if (config.getSpec() == ConfigHolder.CLIENT_SPEC)
+		{
+			ConfigHelper.bakeClient(config);
+		} else if (config.getSpec() == ConfigHolder.SERVER_SPEC)
+		{
+			ConfigHelper.bakeServer(config);
+		}
 	}
 	
 	public void worldLoad(WorldEvent.Load event)
