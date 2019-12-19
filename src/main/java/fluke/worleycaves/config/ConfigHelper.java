@@ -12,17 +12,24 @@ public class ConfigHelper
 	{
 		clientConfig = config;
 
-//		ModConfig.clientBoolean = ConfigHolder.CLIENT.clientBoolean.get();
-//		ModConfig.clientStringList = ConfigHolder.CLIENT.clientStringList.get();
-//		ModConfig.clientEnumDyeColor = ConfigHolder.CLIENT.clientEnumDyeColor.get();
-
 	}
 
 	public static void bakeServer(final ModConfig config)
 	{
 		serverConfig = config;
-
+		
+		//WorleyConfig.blackListedDims = (int[]) ConfigHolder.SERVER.blackListedDims.get().toArray(); //TODO fix dim blacklist
 		WorleyConfig.lavaDepth = ConfigHolder.SERVER.lavaDepth.get();
+		WorleyConfig.easeInDepth = ConfigHolder.SERVER.easeInDepth.get();
+		WorleyConfig.lavaBlock = ConfigHolder.SERVER.lavaBlock.get();
+		WorleyConfig.maxCaveHeight = ConfigHolder.SERVER.maxCaveHeight.get();
+		WorleyConfig.minCaveHeight = ConfigHolder.SERVER.minCaveHeight.get();
+		WorleyConfig.noiseCutoffValue = ConfigHolder.SERVER.noiseCutoffValue.get();
+		WorleyConfig.surfaceCutoffValue = ConfigHolder.SERVER.surfaceCutoffValue.get();
+		WorleyConfig.verticalCompressionMultiplier = ConfigHolder.SERVER.verticalCompressionMultiplier.get();
+		WorleyConfig.horizonalCompressionMultiplier = ConfigHolder.SERVER.horizonalCompressionMultiplier.get();
+		WorleyConfig.warpAmplifier = ConfigHolder.SERVER.warpAmplifier.get();
+
 	}
 
 	private static void setValueAndSave(final ModConfig modConfig, final String path, final Object newValue)

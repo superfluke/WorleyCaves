@@ -7,11 +7,15 @@ import java.util.function.Function;
 import com.google.common.base.MoreObjects;
 import com.mojang.datafixers.Dynamic;
 
+import fluke.worleycaves.config.WorleyConfig;
+import fluke.worleycaves.util.BlockUtil;
 import fluke.worleycaves.util.FastNoise;
 import fluke.worleycaves.util.WorleyUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.material.Material;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.biome.Biome;
@@ -31,8 +35,8 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	private WorleyUtil worleyF1divF3;
 	private FastNoise displacementNoisePerlin;
 
-	private static final BlockState LAVA = Blocks.LAVA.getDefaultState();
 	private static final BlockState AIR = Blocks.AIR.getDefaultState();
+	private static BlockState lavaBlock;
 	private static int maxCaveHeight;
 	private static int minCaveHeight;
 	private static float noiseCutoff;
@@ -42,7 +46,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	private static float xzCompression;
 	private static float surfaceCutoff;
 	private static int lavaDepth;
-	private static boolean additionalWaterChecks;
+	private static boolean additionalWaterChecks = false;
 
 	public WorldCarverWorley(Function<Dynamic<?>, ? extends ProbabilityConfig> p_i49929_1_, int p_i49929_2_)
 	{
@@ -60,8 +64,6 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	
 	public void init(long worldSeed)
 	{
-		//TODO does this break if seed is > max int?
-		
 		worleyF1divF3 = new WorleyUtil((int) worldSeed);
 		worleyF1divF3.SetFrequency(0.016f);
 		
@@ -69,16 +71,18 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		displacementNoisePerlin.SetNoiseType(FastNoise.NoiseType.Perlin);
 		displacementNoisePerlin.SetFrequency(0.05f);
 
-		maxCaveHeight = 128;
-		minCaveHeight = 1;
-		noiseCutoff = -0.18f;
-		warpAmplifier = 8.0f;
-		easeInDepth = 15f;
-		yCompression = 2.0f;
-		xzCompression = 1.0f;
-		surfaceCutoff = -0.081f;
-		lavaDepth = 10;
+		maxCaveHeight = WorleyConfig.maxCaveHeight;
+		minCaveHeight = WorleyConfig.minCaveHeight;
+		noiseCutoff = (float)WorleyConfig.noiseCutoffValue;
+		warpAmplifier = (float)WorleyConfig.warpAmplifier;
+		easeInDepth = (float)WorleyConfig.easeInDepth;
+		yCompression = (float)WorleyConfig.verticalCompressionMultiplier;
+		xzCompression = (float)WorleyConfig.horizonalCompressionMultiplier;
+		surfaceCutoff = (float)WorleyConfig.surfaceCutoffValue;
+		lavaDepth = WorleyConfig.lavaDepth;
 		
+		lavaBlock = BlockUtil.getStateFromString(WorleyConfig.lavaBlock, Blocks.LAVA.getDefaultState());
+
 	}
 
 	@Override
@@ -224,8 +228,8 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 									BlockState aboveBlock = (BlockState) MoreObjects.firstNonNull(chunk.getBlockState(new BlockPos(localX, localY + 1, localZ)), Blocks.AIR.getDefaultState());
 									if (!isFluidBlock(aboveBlock) || localY <= lavaDepth)
 									{
-										// if we are in the easeInDepth range or near sea level or subH2O is installed, do some extra checks for water before digging
-										if ((depth < easeInDepth || localY > (seaLevel - 8) || additionalWaterChecks) && localY > lavaDepth)
+										// if we are in the easeInDepth range or near sea level, do some extra checks for water before digging
+										if ((depth < easeInDepth || localY > (seaLevel - 8) || additionalWaterChecks) && localY > lavaDepth) //TODO hi, I'm fucking broken
 										{
 											if (localX < 15)
 												if (isFluidBlock(chunk.getBlockState(new BlockPos(localX + 1, localY, localZ))))
@@ -268,7 +272,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		}
 
 		// TODO remove
-		System.out.println((float) blocksCarved / (16f * 16f * (float) chunkMaxHeight) + "% carved");
+		//System.out.println((float) blocksCarved / (16f * 16f * (float) chunkMaxHeight) + "% carved");
 	}
 
 	public float[][][] sampleNoise(int chunkX, int chunkZ, int maxSurfaceHeight)
@@ -294,7 +298,6 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 					} else
 					{
 						// Experiment making the cave system more chaotic the more you descend
-						/// TODO might be too dramatic down at lava level
 						float dispAmp = (float) (warpAmplifier * ((originalMaxHeight - y) / (originalMaxHeight * 0.85)));
 
 						float xDisp = 0f;
@@ -430,10 +433,9 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 
 	private boolean canReplaceBlock(BlockState state, BlockState stateUp)
 	{
-		// Need to be able to replace not just vanilla stone + stuff
-//        return (Configs.cavegen.allowReplaceMoreBlocks && state.getMaterial() == Material.ROCK) || super.canReplaceBlock(state, stateUp);
-		// TODO fix canReplaceBlock
-		return true;
+		// Replace anything that's made of rock which should hopefully work for most modded type stones (and maybe not break everything)
+		//TODO test removes modded blocks and doesn't shit the bed
+        return state.getMaterial() == Material.ROCK || super.canCarveBlock(state, stateUp);
 	}
 
 	/**
@@ -462,7 +464,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		{
 			if (blockPos.getY() <= lavaDepth)
 			{
-				chunk.setBlockState(blockPos, LAVA, false);
+				chunk.setBlockState(blockPos, lavaBlock, false);
 			} else
 			{
 				chunk.setBlockState(blockPos, AIR, false);
