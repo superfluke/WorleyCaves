@@ -73,7 +73,7 @@ public class ServerConfig
 		horizonalCompressionMultiplier = builder.comment("\nStreches (when < 1.0) or compresses (when > 1.0) cave generation along X and Z axis \nDefault: 1.0")
 				.translation(Reference.MOD_ID + ".config.horizonalCompressionMultiplier")
 				.worldRestart()
-				.define("horizonalCompressionMultiplier", 2.0);
+				.define("horizonalCompressionMultiplier", 1.0);
 		
 		warpAmplifier = builder.comment("\nControls how much to warp caves. Lower values = straighter caves \nDefault: 8.0")
 				.translation(Reference.MOD_ID + ".config.warpAmplifier")
