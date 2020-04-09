@@ -1,5 +1,7 @@
 package fluke.worleycaves.proxy;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.function.Consumer;
 
 import fluke.worleycaves.config.ConfigHelper;
@@ -7,7 +9,9 @@ import fluke.worleycaves.config.ConfigHolder;
 import fluke.worleycaves.world.WorldCarverWorley;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.GenerationStage;
+import net.minecraft.world.gen.carver.CaveWorldCarver;
 import net.minecraft.world.gen.carver.ConfiguredCarver;
+import net.minecraft.world.gen.carver.UnderwaterCaveWorldCarver;
 import net.minecraft.world.gen.feature.ProbabilityConfig;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
@@ -53,12 +57,35 @@ public class CommonProxy
 			public void accept(Biome b)
 			{
 				// Exclude Nether and End biomes
-				if (b.getCategory() == Biome.Category.NETHER || b.getCategory() == Biome.Category.THEEND)
+				if (b.getCategory() == Biome.Category.NETHER || b.getCategory() == Biome.Category.THEEND || b.getCategory() == Biome.Category.NONE)
 					return;
-
-				b.getCarvers(GenerationStage.Carving.AIR).clear();
-				b.getCarvers(GenerationStage.Carving.LIQUID).clear();
-				b.getCarvers(GenerationStage.Carving.LIQUID).add(configuredWorleyCarver);
+				
+				//Remove vanilla cave carver
+				List<ConfiguredCarver<?>> carversAir = b.getCarvers(GenerationStage.Carving.AIR);
+				Iterator<ConfiguredCarver<?>> iteratorCarversAir = carversAir.iterator();
+				while(iteratorCarversAir.hasNext())
+				{
+					ConfiguredCarver<?> carver = iteratorCarversAir.next();
+					if(carver.carver instanceof CaveWorldCarver)
+					{
+						iteratorCarversAir.remove();
+					}
+				}
+				
+				//Remove vanilla underwater cave carver
+				List<ConfiguredCarver<?>> carversLiquid = b.getCarvers(GenerationStage.Carving.LIQUID);
+				Iterator<ConfiguredCarver<?>> iteratorCarversLiquid = carversLiquid.iterator();
+				while(iteratorCarversLiquid.hasNext())
+				{
+					ConfiguredCarver<?> carver = iteratorCarversLiquid.next();
+					if(carver.carver instanceof UnderwaterCaveWorldCarver)
+					{
+						iteratorCarversLiquid.remove();
+					}
+				}
+				
+				b.getCarvers(GenerationStage.Carving.AIR).add(configuredWorleyCarver);
+//				b.getCarvers(GenerationStage.Carving.LIQUID).add(configuredWorleyCarver); //There is no underwater carver for Worley's
 			}
 		});
 	}
