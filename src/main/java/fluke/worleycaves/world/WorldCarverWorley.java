@@ -15,7 +15,6 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.biome.Biome;
@@ -89,10 +88,12 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	public boolean carve(IChunk chunkIn, Random rand, int seaLevel, int chunkX, int chunkZ, int chunkXOffset, int chunkZOffset, BitSet carvingMask, ProbabilityConfig config)
 	{
 		if (chunkXOffset != chunkX || chunkZOffset != chunkZ)
+		{
 			return false;
+		}
 
 		debugValueAdjustments();
-		boolean logTime = true; //TODO turn off
+		boolean logTime = false;
 		long millis = 0;
 		if (logTime)
 		{
@@ -119,8 +120,6 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 
 	protected void carveWorleyCaves(IChunk chunk, int seaLevel, int chunkX, int chunkZ)
 	{
-		int blocksCarved = 0;
-
 		int chunkMaxHeight = getMaxSurfaceHeight(chunk);
 		float[][][] samples = sampleNoise(chunkX, chunkZ, chunkMaxHeight + 1);
 		float oneQuarter = 0.25F;
@@ -174,7 +173,6 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 						for (int subx = 0; subx < 4; subx++)
 						{
 							int localX = subx + x * 4;
-							int realX = localX + chunkX * 16;
 
 							// how much to increment Z values, linear interpolation
 							float noiseStepZ = (noiseEndZ - noiseStartZ) * oneQuarter;
@@ -186,7 +184,6 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 							for (int subz = 0; subz < 4; subz++)
 							{
 								int localZ = subz + z * 4;
-								int realZ = localZ + chunkZ * 16;
 
 								if (depth == 0)
 								{
@@ -229,7 +226,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 									if (!isFluidBlock(aboveBlock) || localY <= lavaDepth)
 									{
 										// if we are in the easeInDepth range or near sea level, do some extra checks for water before digging
-										if ((depth < easeInDepth || localY > (seaLevel - 8) || additionalWaterChecks) && localY > lavaDepth) //TODO hi, I'm fucking broken
+										if ((depth < easeInDepth || localY > (seaLevel - 8) || additionalWaterChecks) && localY > lavaDepth)
 										{
 											if (localX < 15)
 												if (isFluidBlock(chunk.getBlockState(new BlockPos(localX + 1, localY, localZ))))
@@ -251,7 +248,6 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 											foundTopBlock = true;
 										}
 										digBlock(chunk, new BlockPos(localX, localY, localZ), chunkX, chunkZ, foundTopBlock, currentBlock, aboveBlock);
-										blocksCarved++;
 									}
 								}
 
@@ -270,9 +266,6 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 				}
 			}
 		}
-
-		// TODO remove
-		//System.out.println((float) blocksCarved / (16f * 16f * (float) chunkMaxHeight) + "% carved");
 	}
 
 	public float[][][] sampleNoise(int chunkX, int chunkZ, int maxSurfaceHeight)
@@ -434,8 +427,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	private boolean canReplaceBlock(BlockState state, BlockState stateUp)
 	{
 		// Replace anything that's made of rock which should hopefully work for most modded type stones (and maybe not break everything)
-		//TODO test removes modded blocks and doesn't shit the bed
-        return state.getMaterial() == Material.ROCK || super.canCarveBlock(state, stateUp);
+		return state.getMaterial() == Material.ROCK || super.canCarveBlock(state, stateUp);
 	}
 
 	/**
