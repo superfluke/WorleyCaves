@@ -83,9 +83,14 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		lavaBlock = BlockUtil.getStateFromString(WorleyConfig.lavaBlock, Blocks.LAVA.getDefaultState());
 
 	}
-
+	
 	@Override
-	public boolean carve(IChunk chunkIn, Random rand, int seaLevel, int chunkX, int chunkZ, int chunkXOffset, int chunkZOffset, BitSet carvingMask, ProbabilityConfig config)
+	public boolean func_225555_a_(IChunk chunkIn, Function<BlockPos, Biome> getBiomeFunction, Random rand, int seaLevel, int chunkXOffset, int chunkZOffset, int chunkX, int chunkZ, BitSet carvingMask, ProbabilityConfig config)
+	{
+		return carve(chunkIn, getBiomeFunction, rand, seaLevel, chunkX, chunkZ, chunkXOffset, chunkZOffset, carvingMask, config);
+	}
+
+	public boolean carve(IChunk chunkIn, Function<BlockPos, Biome> getBiomeFunction, Random rand, int seaLevel, int chunkX, int chunkZ, int chunkXOffset, int chunkZOffset, BitSet carvingMask, ProbabilityConfig config)
 	{
 		if (chunkXOffset != chunkX || chunkZOffset != chunkZ)
 		{
@@ -100,7 +105,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 			millis = System.currentTimeMillis();
 		}
 
-		this.carveWorleyCaves(chunkIn, seaLevel, chunkX, chunkZ);
+		this.carveWorleyCaves(chunkIn, getBiomeFunction, seaLevel, chunkX, chunkZ);
 
 		if (logTime)
 		{
@@ -118,7 +123,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		return true;
 	}
 
-	protected void carveWorleyCaves(IChunk chunk, int seaLevel, int chunkX, int chunkZ)
+	protected void carveWorleyCaves(IChunk chunk, Function<BlockPos, Biome> getBiomeFunction, int seaLevel, int chunkX, int chunkZ)
 	{
 		int chunkMaxHeight = getMaxSurfaceHeight(chunk);
 		float[][][] samples = sampleNoise(chunkX, chunkZ, chunkMaxHeight + 1);
@@ -192,7 +197,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 									{
 										BlockState currentBlock = chunk.getBlockState(new BlockPos(localX, localY, localZ));
 										// use isDigable to skip leaves/wood getting counted as surface
-										if (canReplaceBlock(currentBlock, AIR) || isBiomeBlock(chunk, new BlockPos(localX, localY, localZ)))
+										if (canReplaceBlock(currentBlock, AIR) || isBiomeBlock(chunk, getBiomeFunction, new BlockPos(localX, localY, localZ)))
 										{
 											depth++;
 										}
@@ -243,11 +248,11 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 										}
 										BlockState currentBlock = chunk.getBlockState(new BlockPos(localX, localY, localZ));
 										boolean foundTopBlock = false;
-										if (isTopBlock(chunk, localX, localY, localZ, chunkX, chunkZ))
+										if (isTopBlock(chunk, getBiomeFunction, localX, localY, localZ, chunkX, chunkZ))
 										{
 											foundTopBlock = true;
 										}
-										digBlock(chunk, new BlockPos(localX, localY, localZ), chunkX, chunkZ, foundTopBlock, currentBlock, aboveBlock);
+										digBlock(chunk, getBiomeFunction, new BlockPos(localX, localY, localZ), chunkX, chunkZ, foundTopBlock, currentBlock, aboveBlock);
 									}
 								}
 
@@ -378,9 +383,10 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	}
 
 	// returns true if block matches the top or filler block of the location biome
-	private boolean isBiomeBlock(IChunk chunk, BlockPos blockPos)
+	private boolean isBiomeBlock(IChunk chunk, Function<BlockPos, Biome> getBiomeFunction, BlockPos blockPos)
 	{
-		Biome biome = chunk.getBiome(blockPos);
+		Biome biome = getBiomeFunction.apply(blockPos);
+//		Biome biome = chunk.getBiome(blockPos);
 		BlockState blockState = chunk.getBlockState(blockPos);
 		return blockState == biome.getSurfaceBuilderConfig().getTop() || blockState == biome.getSurfaceBuilderConfig().getUnder();
 	}
@@ -394,9 +400,10 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 
 	// Because it's private in MapGenCaves this is reimplemented
 	// Determine if the block at the specified location is the top block for the biome, we take into account
-	private boolean isTopBlock(IChunk chunk, int x, int y, int z, int chunkX, int chunkZ)
+	private boolean isTopBlock(IChunk chunk, Function<BlockPos, Biome> getBiomeFunction, int x, int y, int z, int chunkX, int chunkZ)
 	{
-		Biome biome = chunk.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
+		Biome biome = getBiomeFunction.apply(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
+//		Biome biome = chunk.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
 		BlockState state = chunk.getBlockState(new BlockPos(x, y, z));
 		return (isExceptionBiome(biome) ? state.getBlock() == Blocks.GRASS
 				: state == biome.getSurfaceBuilderConfig().getTop());
@@ -446,9 +453,10 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	 * @param foundTop True if we've encountered the biome's top block. Ideally if
 	 *                 we've broken the surface.
 	 */
-	private void digBlock(IChunk chunk, BlockPos blockPos, int chunkX, int chunkZ, boolean foundTop, BlockState state, BlockState blockStateUp)
+	private void digBlock(IChunk chunk, Function<BlockPos, Biome> getBiomeFunction, BlockPos blockPos, int chunkX, int chunkZ, boolean foundTop, BlockState state, BlockState blockStateUp)
 	{
-		Biome biome = chunk.getBiome(blockPos);
+		Biome biome = getBiomeFunction.apply(blockPos);
+//		Biome biome = chunk.getBiome(blockPos);
 		BlockState top = biome.getSurfaceBuilderConfig().getTop();
 		BlockState filler = biome.getSurfaceBuilderConfig().getUnder();
 
