@@ -28,9 +28,6 @@
 
 package fluke.worleycaves.util;
 
-import javax.vecmath.Vector2f;
-import javax.vecmath.Vector3f;
-
 public class FastNoise {
 	public enum NoiseType {
 		Value, ValueFractal, Perlin, PerlinFractal, Simplex, SimplexFractal, Cellular, WhiteNoise, Cubic, CubicFractal
