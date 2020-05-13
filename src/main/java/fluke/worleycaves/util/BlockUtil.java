@@ -1,7 +1,6 @@
 package fluke.worleycaves.util;
 
 import fluke.worleycaves.Main;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;

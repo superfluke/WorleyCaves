@@ -1,15 +1,10 @@
 package fluke.worleycaves.config;
 
-import java.util.List;
-
-import com.google.common.collect.Lists;
-
 import fluke.worleycaves.util.Reference;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public class ServerConfig
 {
-	final ForgeConfigSpec.ConfigValue<List<Integer>> blackListedDims;
 	final ForgeConfigSpec.ConfigValue<Integer> lavaDepth;
 	final ForgeConfigSpec.ConfigValue<Integer> easeInDepth;
 	final ForgeConfigSpec.ConfigValue<String> lavaBlock;
@@ -24,11 +19,6 @@ public class ServerConfig
 	ServerConfig(final ForgeConfigSpec.Builder builder)
 	{
 		builder.push("general");
-		
-		blackListedDims = builder.comment("\nDimension IDs that will use Vanilla cave generation rather than Worley's Caves \nDefault:")
-				.translation(Reference.MOD_ID + ".config.blackListedDims")
-				.worldRestart()
-				.define("blackListedDims", Lists.newArrayList());
 		
 		lavaDepth = builder.comment("\nAir blocks at or below this y level will generate as lavaBlock \nDefault: 10")
 				.translation(Reference.MOD_ID + ".config.lavaDepth")
@@ -73,7 +63,7 @@ public class ServerConfig
 		horizonalCompressionMultiplier = builder.comment("\nStreches (when < 1.0) or compresses (when > 1.0) cave generation along X and Z axis \nDefault: 1.0")
 				.translation(Reference.MOD_ID + ".config.horizonalCompressionMultiplier")
 				.worldRestart()
-				.define("horizonalCompressionMultiplier", 2.0);
+				.define("horizonalCompressionMultiplier", 1.0);
 		
 		warpAmplifier = builder.comment("\nControls how much to warp caves. Lower values = straighter caves \nDefault: 8.0")
 				.translation(Reference.MOD_ID + ".config.warpAmplifier")
