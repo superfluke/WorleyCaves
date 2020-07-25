@@ -5,7 +5,8 @@ import java.util.Random;
 import java.util.function.Function;
 
 import com.google.common.base.MoreObjects;
-import com.mojang.datafixers.Dynamic;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.Dynamic;
 
 import fluke.worleycaves.config.WorleyConfig;
 import fluke.worleycaves.util.BlockUtil;
@@ -20,6 +21,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.chunk.IChunk;
+import net.minecraft.world.gen.carver.ICarverConfig;
 import net.minecraft.world.gen.carver.WorldCarver;
 import net.minecraft.world.gen.feature.ProbabilityConfig;
 import net.minecraftforge.fluids.IFluidBlock;
@@ -47,7 +49,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	private static int lavaDepth;
 	private static boolean additionalWaterChecks = false;
 
-	public WorldCarverWorley(Function<Dynamic<?>, ? extends ProbabilityConfig> p_i49929_1_, int p_i49929_2_)
+	public WorldCarverWorley(Codec<ProbabilityConfig> p_i49929_1_, int p_i49929_2_)
 	{
 		super(p_i49929_1_, p_i49929_2_);
 
@@ -270,6 +272,10 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 					}
 				}
 			}
+		}
+		boolean carved = true;
+		if (carved) {
+			return;
 		}
 	}
 

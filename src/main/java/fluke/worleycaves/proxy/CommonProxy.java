@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import fluke.worleycaves.config.ConfigHelper;
 import fluke.worleycaves.config.ConfigHolder;
 import fluke.worleycaves.world.WorldCarverWorley;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.GenerationStage;
 import net.minecraft.world.gen.carver.CaveWorldCarver;
@@ -32,8 +33,9 @@ public class CommonProxy
 	{
 		IEventBus fmlBus = FMLJavaModLoadingContext.get().getModEventBus();
 		IEventBus forgeBus = MinecraftForge.EVENT_BUS;
-		
-		worleyCarver = new WorldCarverWorley(ProbabilityConfig::deserialize, 256);
+
+
+		worleyCarver = new WorldCarverWorley(ProbabilityConfig.field_236576_b_, 256);
 		configuredWorleyCarver = Biome.createCarver(worleyCarver, new ProbabilityConfig(1));
 		
 		registerListeners(fmlBus, forgeBus);
@@ -116,7 +118,8 @@ public class CommonProxy
 	public void worldUnload(WorldEvent.Unload event) 
 	{
 		//if player quits world make sure we reset seed
-		if(event.getWorld().getDimension().isSurfaceWorld())
+		DimensionType dimension = event.getWorld().getWorld().func_230315_m_();
+		if(dimension.hasSkyLight())
 		{
 			seedsSet = false;
 			worldSeed = 0;
@@ -127,12 +130,16 @@ public class CommonProxy
 	{
 		if(seedsSet)
 			return;
+
+		// There's probably a better (and prettier) way to get the seed.
+		// So far, this is the only way that I've found out.
+		long seed = event.getWorld().getWorld().getServer().func_240793_aU_().func_230418_z_().func_236221_b_();
 		
-		long seed = event.getWorld().getSeed();
-		
-		if(seed != 0)
+		if(seed != 0) {
 			worldSeed = seed;
-		
+			seedsSet = true;
+		}
+
 		worleyCarver.init(worldSeed);
 	}
 

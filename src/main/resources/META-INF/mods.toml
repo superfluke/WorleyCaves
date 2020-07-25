@@ -1,11 +1,11 @@
 modLoader="javafml"
-loaderVersion="[31,)"
+loaderVersion="[32,)"
 
 issueTrackerURL="https://github.com/superfluke/WorleyCaves/issues"
 
 [[mods]]
 	modId="worleycaves"
-	version="1.15.2-1.6.0"
+	version="1.16.1-32.0.47"
 	displayName="Worley's Caves"
 	displayURL="https://www.curseforge.com/minecraft/mc-mods/worleys-caves"
 	credits=""
@@ -17,13 +17,13 @@ issueTrackerURL="https://github.com/superfluke/WorleyCaves/issues"
 [[dependencies.worleycaves]] #optional
     modId="forge" #mandatory
     mandatory=true #mandatory
-    versionRange="[31,)" #mandatory
+    versionRange="[32,)" #mandatory
     ordering="NONE"
     side="BOTH"
     
 [[dependencies.worleycaves]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.15.2]"
+    versionRange="[1.16.1]"
     ordering="NONE"
     side="BOTH"
