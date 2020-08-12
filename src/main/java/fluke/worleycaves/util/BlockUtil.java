@@ -1,27 +1,27 @@
 package fluke.worleycaves.util;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
+import fluke.worleycaves.Main;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public class BlockUtil 
 {
-	//returns state from string with format of mod:block:meta with meta being optional
-	//may return null
-	@SuppressWarnings("deprecation")
-	public static IBlockState getStateFromString(String block)
+	//Sets block to passed in string. If string is not found to be a valid block, sets to fallback
+	public static BlockState getStateFromString(String block, BlockState fallback)
 	{
-		String[] splitty = block.split(":");
-		Block blocky;
-		if(splitty.length > 2)
+		BlockState blocky;
+
+		blocky = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(block)).getDefaultState();
+		
+		if(blocky == null)
 		{
-			blocky = Block.getBlockFromName(splitty[0] + ":" + splitty[1]);
-			return blocky==null? null : blocky.getStateFromMeta(Integer.valueOf(splitty[2]));
+			Main.LOGGER.warn("Unable to find block: " + block + "   Using fallback block: " + fallback.toString());
+			blocky = fallback;
 		}
-		else
-		{
-			blocky = Block.getBlockFromName(block);
-			return blocky==null? null : blocky.getDefaultState();
-		}
+		
+		return blocky;
+
 	}
 
 }
