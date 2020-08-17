@@ -273,10 +273,6 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 				}
 			}
 		}
-		boolean carved = true;
-		if (carved) {
-			return;
-		}
 	}
 
 	public float[][][] sampleNoise(int chunkX, int chunkZ, int maxSurfaceHeight)
