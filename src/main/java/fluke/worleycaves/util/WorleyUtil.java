@@ -32,9 +32,9 @@ public class WorleyUtil {
 	
 	private static int Hash3D(int seed, int x, int y, int z) {
 		int hash = seed;
-		hash ^= X_PRIME * x;
-		hash ^= Y_PRIME * y;
-		hash ^= Z_PRIME * z;
+		hash ^= x;
+		hash ^= y;
+		hash ^= z;
 
 		hash = hash * hash * hash * 60493;
 		hash = (hash >> 13) ^ hash;
@@ -317,28 +317,36 @@ public class WorleyUtil {
 		y *= m_frequency;
 		z *= m_frequency;
 		
-		int xr = FastNoise.FastFloor(x);
-		int yr = FastNoise.FastFloor(y);
-		int zr = FastNoise.FastFloor(z);
+		int xr = FastNoise.FastFloor(x)-1;
+		int yr = FastNoise.FastFloor(y)-1;
+		int zr = FastNoise.FastFloor(z)-1;
+		int xrPrime = xr * X_PRIME;
+		int yrPrime = yr * Y_PRIME;
+		int zrPrime = zr * Z_PRIME;
 		
 		float distance1 = 999999;
 		float distance2 = 999999;
 		float distance3 = 999999;
 		
-		for (int xi = xr-1; xi <= xr+1; xi++)
+		int xp = xrPrime;
+		int yp = yrPrime;
+		int zp = zrPrime;
+		for (int xi = 0; xi < 3; xi++)
 		{
-			for (int yi = yr-1; yi <= yr+1; yi++)
+			yp = yrPrime;
+			for (int yi = 0; yi < 3; yi++)
 			{
-				for (int zi = zr-1; zi <= zr+1; zi++)
+				zp = zrPrime;
+				for (int zi = 0; zi < 3; zi++)
 				{
-					Float3 vec = CELL_3D[Hash3D(m_seed, xi, yi, zi) & 255];
+					Float3 vec = CELL_3D[Hash3D(m_seed, xp, yp, zp) & 255];
 
-					float vecX = xi + vec.x+0.5f - x;
-					float vecY = yi + vec.y+0.5f - y;
-					float vecZ = zi + vec.z+0.5f - z;
+					float vecX = xr + xi + vec.x+0.5f - x;
+					float vecY = yr + yi + vec.y+0.5f - y;
+					float vecZ = zr + zi + vec.z+0.5f - z;
 
 					float newDistance = vecX * vecX + vecY * vecY + vecZ * vecZ;
-					
+
 					if (newDistance < distance1)
 					{
 						distance3 = distance2;
@@ -352,8 +360,14 @@ public class WorleyUtil {
 					{
 						distance3 = newDistance;
 					}
+					
+					zp += Z_PRIME;
 				}
+				
+				yp += Y_PRIME;
 			}
+			
+			xp += X_PRIME;
 		}
 			
 		return distance1 / distance3 - 1;

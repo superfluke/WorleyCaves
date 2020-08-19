@@ -100,7 +100,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		}
 
 		debugValueAdjustments();
-		boolean logTime = false;
+		boolean logTime = false; //TODO turn off
 		long millis = 0;
 		if (logTime)
 		{
