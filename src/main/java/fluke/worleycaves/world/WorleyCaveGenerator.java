@@ -97,6 +97,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		//noiseCutoff = 0.18F;
 		//warpAmplifier = 8.0F;
 		//easeInDepth = 15;
+		//xzCompression = 0.5f;
 	}
 	
 	@Override

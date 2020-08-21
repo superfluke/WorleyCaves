@@ -35,7 +35,7 @@ public class Configs
 		@Config.RequiresWorldRestart
 		public double verticalCompressionMultiplier = 2.0;
 		
-	    @Config.Comment({"Streches (when > 1.0) or compresses (when < 1.0) cave generation along X and Z axis", "Default: 1.0"}) 
+	    @Config.Comment({"Streches (when < 1.0) or compresses (when > 1.0) cave generation along X and Z axis", "Default: 1.0"}) 
 	    @Config.RequiresWorldRestart 
 	    public double horizonalCompressionMultiplier = 1.0; 
 		
