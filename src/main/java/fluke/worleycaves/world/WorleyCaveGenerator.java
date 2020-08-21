@@ -39,6 +39,8 @@ public class WorleyCaveGenerator extends MapGenCaves
 	
 	private static IBlockState lava;
 	private static final IBlockState AIR = Blocks.AIR.getDefaultState();
+	private static final IBlockState SAND = Blocks.SAND.getDefaultState();
+	private static final IBlockState RED_SAND = Blocks.SAND.getStateFromMeta(1);
 	private static int maxCaveHeight;
 	private static int minCaveHeight;
 	private static float noiseCutoff;
@@ -49,6 +51,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 	private static float surfaceCutoff;
 	private static int lavaDepth;
 	private static boolean additionalWaterChecks;
+	private static int HAS_CAVES_FLAG = 129;
 
 	
 	
@@ -145,7 +148,6 @@ public class WorleyCaveGenerator extends MapGenCaves
         float oneHalf = 0.5F;
         Biome currentBiome;
     	BlockPos realPos;
-        
         //float cutoffAdjuster = 0F; //TODO one day, perlin adjustments to cutoff
         
 		//each chunk divided into 4 subchunks along X axis
@@ -155,6 +157,11 @@ public class WorleyCaveGenerator extends MapGenCaves
 			for (int z = 0; z < 4; z++)
 			{
 				int depth = 0;
+				
+				//don't bother checking all the other logic if there's nothing to dig in this column
+				if(samples[x][HAS_CAVES_FLAG][z] == 0 && samples[x+1][HAS_CAVES_FLAG][z] == 0 && samples[x][HAS_CAVES_FLAG][z+1] == 0 && samples[x+1][HAS_CAVES_FLAG][z+1] == 0)
+					continue;
+				
 				//each chunk divided into 128 subchunks along Y axis. Need lots of y sample points to not break things
 				for(int y = (maxCaveHeight/2)-1; y >= 0; y--)
 				{
@@ -273,13 +280,10 @@ public class WorleyCaveGenerator extends MapGenCaves
             										continue;
             							}
 	            						IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
-	            						boolean foundTopBlock = false;
 	            						if(currentBiome == null)
 	            							currentBiome = world.provider.getBiomeProvider().getBiome(realPos, Biomes.PLAINS);//world.getBiome(realPos);
-	            						if (isTopBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ, currentBiome))
-	                                    {
-	                                        foundTopBlock = true;
-	                                    }
+	            						
+	            						boolean foundTopBlock = isTopBlock(currentBlock, currentBiome);
 	            						digBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ, foundTopBlock, currentBlock, aboveBlock, currentBiome);
             						}
             					}
@@ -304,7 +308,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 	public float[][][] sampleNoise(int chunkX, int chunkZ, int maxSurfaceHeight) 
 	{
 		int originalMaxHeight = 128;
-		float[][][] noiseSamples = new float[5][129][5];
+		float[][][] noiseSamples = new float[5][130][5];
 		float noise;
 		for (int x = 0; x < 5; x++)
 		{
@@ -313,6 +317,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 			{
 				int realZ = z*4 + chunkZ*16;
 				
+				int columnHasCaveFlag = 0; 
 				
 				//loop from top down for y values so we can adjust noise above current y later on
 				for(int y = 128; y >= 0; y--)
@@ -343,6 +348,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 						
 						if (noise > noiseCutoff)
 						{
+							columnHasCaveFlag = 1;
 							//if noise is below cutoff, adjust values of neighbors
 							//helps prevent caves fracturing during interpolation
 							
@@ -368,6 +374,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 						}
 					}
 				}
+				noiseSamples[x][HAS_CAVES_FLAG][z] = columnHasCaveFlag; //used to skip cave digging logic when we know there is nothing to dig out
 			}
 		}
 		return noiseSamples;
@@ -434,9 +441,9 @@ public class WorleyCaveGenerator extends MapGenCaves
 	//Because it's private in MapGenCaves this is reimplemented
 	//Determine if the block at the specified location is the top block for the biome, we take into account
     //Vanilla bugs to make sure that we generate the map the same way vanilla does.
-    private boolean isTopBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ, Biome biome)
+    private boolean isTopBlock(IBlockState state, Biome biome)
     {
-        IBlockState state = data.getBlockState(x, y, z);
+        //IBlockState state = data.getBlockState(x, y, z);
         return (isExceptionBiome(biome) ? state.getBlock() == Blocks.GRASS : state == biome.topBlock);
     }
     
@@ -474,6 +481,7 @@ public class WorleyCaveGenerator extends MapGenCaves
     {
         IBlockState top = biome.topBlock;
         IBlockState filler = biome.fillerBlock;
+        
 
         if (this.canReplaceBlock(state, up) || state.getBlock() == top.getBlock() || state.getBlock() == filler.getBlock())
         {
@@ -491,11 +499,11 @@ public class WorleyCaveGenerator extends MapGenCaves
                 }
                 
                 //replace floating sand with sandstone
-                if(up == Blocks.SAND.getDefaultState())
+                if(up == SAND)
                 {
                 	data.setBlockState(x, y+1, z, BLK_SANDSTONE);
                 }
-                else if(up == Blocks.SAND.getStateFromMeta(1))
+                else if(up == RED_SAND)
                 {
                 	data.setBlockState(x, y+1, z, BLK_RED_SANDSTONE);
                 }
