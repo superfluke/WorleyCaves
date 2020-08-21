@@ -11,6 +11,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Biomes;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -142,6 +143,9 @@ public class WorleyCaveGenerator extends MapGenCaves
 		float[][][] samples = sampleNoise(chunkX, chunkZ, chunkMaxHeight+1);
         float oneQuarter = 0.25F;
         float oneHalf = 0.5F;
+        Biome currentBiome;
+    	BlockPos realPos;
+        
         //float cutoffAdjuster = 0F; //TODO one day, perlin adjustments to cutoff
         
 		//each chunk divided into 4 subchunks along X axis
@@ -205,6 +209,8 @@ public class WorleyCaveGenerator extends MapGenCaves
                             {
                             	int localZ = subz + z*4;
                             	int realZ = localZ + chunkZ*16;
+                            	realPos = new BlockPos(realX, localY, realZ);
+                            	currentBiome = null;
                             	
                             	if(depth == 0)
                             	{
@@ -212,8 +218,10 @@ public class WorleyCaveGenerator extends MapGenCaves
                             		if(subx == 0 && subz == 0)
                             		{
 	                            		IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
+	                            		currentBiome = world.provider.getBiomeProvider().getBiome(realPos, Biomes.PLAINS);//world.getBiome(realPos);
+	                            		
 	                            		//use isDigable to skip leaves/wood getting counted as surface
-	            						if(canReplaceBlock(currentBlock, AIR) || isBiomeBlock(chunkPrimerIn, realX, realZ, currentBlock))
+	            						if(canReplaceBlock(currentBlock, AIR) || isBiomeBlock(chunkPrimerIn, realX, realZ, currentBlock, currentBiome))
 	            						{
 	            							depth++;
 	            						}
@@ -266,11 +274,13 @@ public class WorleyCaveGenerator extends MapGenCaves
             							}
 	            						IBlockState currentBlock = chunkPrimerIn.getBlockState(localX, localY, localZ);
 	            						boolean foundTopBlock = false;
-	            						if (isTopBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ))
+	            						if(currentBiome == null)
+	            							currentBiome = world.provider.getBiomeProvider().getBiome(realPos, Biomes.PLAINS);//world.getBiome(realPos);
+	            						if (isTopBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ, currentBiome))
 	                                    {
 	                                        foundTopBlock = true;
 	                                    }
-	            						digBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ, foundTopBlock, currentBlock, aboveBlock);
+	            						digBlock(chunkPrimerIn, localX, localY, localZ, chunkX, chunkZ, foundTopBlock, currentBlock, aboveBlock, currentBiome);
             						}
             					}
                                 
@@ -302,6 +312,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 			for (int z = 0; z < 5; z++)
 			{
 				int realZ = z*4 + chunkZ*16;
+				
 				
 				//loop from top down for y values so we can adjust noise above current y later on
 				for(int y = 128; y >= 0; y--)
@@ -408,9 +419,8 @@ public class WorleyCaveGenerator extends MapGenCaves
 	}
 	
 	//returns true if block matches the top or filler block of the location biome
-	private boolean isBiomeBlock(ChunkPrimer primer, int realX, int realZ, IBlockState state)
+	private boolean isBiomeBlock(ChunkPrimer primer, int realX, int realZ, IBlockState state, Biome biome)
 	{
-		Biome biome = world.getBiome(new BlockPos(realX, 0, realZ));
 		return state == biome.topBlock || state == biome.fillerBlock;
 	}
 	
@@ -424,9 +434,8 @@ public class WorleyCaveGenerator extends MapGenCaves
 	//Because it's private in MapGenCaves this is reimplemented
 	//Determine if the block at the specified location is the top block for the biome, we take into account
     //Vanilla bugs to make sure that we generate the map the same way vanilla does.
-    private boolean isTopBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ)
+    private boolean isTopBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ, Biome biome)
     {
-        Biome biome = world.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
         IBlockState state = data.getBlockState(x, y, z);
         return (isExceptionBiome(biome) ? state.getBlock() == Blocks.GRASS : state == biome.topBlock);
     }
@@ -461,9 +470,8 @@ public class WorleyCaveGenerator extends MapGenCaves
      * @param chunkZ Chunk Y position
      * @param foundTop True if we've encountered the biome's top block. Ideally if we've broken the surface.
      */
-    protected void digBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ, boolean foundTop, IBlockState state, IBlockState up)
+    protected void digBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ, boolean foundTop, IBlockState state, IBlockState up, Biome biome)
     {
-        net.minecraft.world.biome.Biome biome = world.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
         IBlockState top = biome.topBlock;
         IBlockState filler = biome.fillerBlock;
 
