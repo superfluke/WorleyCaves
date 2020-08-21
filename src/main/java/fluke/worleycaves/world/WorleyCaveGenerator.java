@@ -116,7 +116,7 @@ public class WorleyCaveGenerator extends MapGenCaves
 		}
 		
 		debugValueAdjustments();
-		boolean logTime = true; //TODO turn off
+		boolean logTime = false; //TODO turn off
 		long start = 0;
 		if(logTime)
 		{
