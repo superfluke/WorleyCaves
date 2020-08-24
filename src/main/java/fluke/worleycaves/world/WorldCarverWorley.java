@@ -29,7 +29,8 @@ import net.minecraftforge.fluids.IFluidBlock;
 public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 {
 
-	long[] genTime = new long[300];
+	int numLogChunks = 500;
+	long[] genTime = new long[numLogChunks];
 	int currentTimeIndex = 0;
 	double sum = 0;
 
@@ -100,23 +101,23 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		}
 
 		debugValueAdjustments();
-		boolean logTime = false; //TODO turn off
-		long millis = 0;
+		boolean logTime = true; //TODO turn off
+		long start = 0;
 		if (logTime)
 		{
-			millis = System.currentTimeMillis();
+			start = System.nanoTime();
 		}
 
 		this.carveWorleyCaves(chunkIn, getBiomeFunction, seaLevel, chunkX, chunkZ);
 
 		if (logTime)
 		{
-			genTime[currentTimeIndex] = System.currentTimeMillis() - millis;
+			genTime[currentTimeIndex] = System.nanoTime() - start;
 			sum += genTime[currentTimeIndex];
 			currentTimeIndex++;
 			if (currentTimeIndex == genTime.length)
 			{
-				System.out.printf("300 chunk average: %.2f ms per chunk\n", sum / 300.0);
+				System.out.printf("%d chunk average: %.2f ms per chunk\n", numLogChunks, sum/((float)numLogChunks*1000000));
 				sum = 0;
 				currentTimeIndex = 0;
 			}
@@ -304,9 +305,9 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 						float yDisp = 0f;
 						float zDisp = 0f;
 
-						xDisp = displacementNoisePerlin.GetNoise(realX, realY, realZ) * dispAmp;
-						yDisp = displacementNoisePerlin.GetNoise(realX, realY - 256.0f, realZ) * dispAmp;
-						zDisp = displacementNoisePerlin.GetNoise(realX, realY - 512.0f, realZ) * dispAmp;
+						xDisp = displacementNoisePerlin.GetNoise(realX, realZ)*dispAmp; 
+						yDisp = displacementNoisePerlin.GetNoise(realX, realZ+67.0f)*dispAmp;
+						zDisp = displacementNoisePerlin.GetNoise(realX, realZ+149.0f)*dispAmp;
 
 						// doubling the y frequency to get some more caves
 						noise = worleyF1divF3.SingleCellular3Edge(realX * xzCompression + xDisp, realY * yCompression + yDisp, realZ * xzCompression + zDisp);
@@ -366,19 +367,20 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		return top;
 	}
 
-	// tests 8 edge points and center of chunk to get max height
+	//tests 6 points in hexagon pattern get max height of chunk
 	private int getMaxSurfaceHeight(IChunk chunk)
 	{
 		int max = 0;
-		int[] testcords = { 0, 7, 15 };
+		int[][] testcords = {{2, 6}, {3, 11}, {7, 2}, {9, 13}, {12,4}, {13, 9}};
 
 		for (int n = 0; n < testcords.length; n++)
 		{
-			for (int m = 0; m < testcords.length; m++)
+			int testmax = getSurfaceHeight(chunk, testcords[n][0], testcords[n][1]);
+			if(testmax > max)
 			{
-				int testmax = getSurfaceHeight(chunk, testcords[n], testcords[m]);
-				if (testmax > max)
-					max = testmax;
+				max = testmax;
+				if(max > maxCaveHeight)
+					return max;
 			}
 		}
 		return max;
