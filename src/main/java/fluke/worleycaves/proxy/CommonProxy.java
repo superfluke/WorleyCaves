@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import fluke.worleycaves.config.ConfigHelper;
 import fluke.worleycaves.config.ConfigHolder;
 import fluke.worleycaves.world.WorldCarverWorley;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.GenerationStage;
@@ -130,12 +131,14 @@ public class CommonProxy
 	{
 		if(seedsSet)
 			return;
-
+		if(event.getWorld().isRemote())
+			return;
+		
 		// There's probably a better (and prettier) way to get the seed.
 		// So far, this is the only way that I've found out.
 		long seed = event.getWorld().getWorld().getServer().func_240793_aU_().func_230418_z_().func_236221_b_();
-		
-		if(seed != 0) {
+		if(seed != 0) 
+		{
 			worldSeed = seed;
 			seedsSet = true;
 		}

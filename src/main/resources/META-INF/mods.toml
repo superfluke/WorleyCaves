@@ -5,7 +5,7 @@ issueTrackerURL="https://github.com/superfluke/WorleyCaves/issues"
 
 [[mods]]
 	modId="worleycaves"
-	version="1.16.1-1.6.1"
+	version="1.16.1-1.6.2"
 	displayName="Worley's Caves"
 	displayURL="https://www.curseforge.com/minecraft/mc-mods/worleys-caves"
 	credits=""
