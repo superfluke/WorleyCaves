@@ -11,10 +11,7 @@ import net.minecraft.world.DimensionType;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.GenerationStage;
-import net.minecraft.world.gen.carver.CaveWorldCarver;
-import net.minecraft.world.gen.carver.ConfiguredCarver;
-import net.minecraft.world.gen.carver.UnderwaterCaveWorldCarver;
-import net.minecraft.world.gen.carver.WorldCarver;
+import net.minecraft.world.gen.carver.*;
 import net.minecraft.world.gen.feature.ProbabilityConfig;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
@@ -74,9 +71,12 @@ public class CommonProxy
 
 			//Remove vanilla underwater cave carver
 			List<Supplier<ConfiguredCarver<?>>> carversLiquid = event.getGeneration().getCarvers(GenerationStage.Carving.LIQUID);
-			carversLiquid.removeIf(carver -> carver.get().worldCarver instanceof UnderwaterCaveWorldCarver);
+			carversLiquid.removeIf(carver -> {
+				final WorldCarver<?> worldCarver = carver.get().worldCarver;
+				return worldCarver instanceof UnderwaterCaveWorldCarver || worldCarver instanceof UnderwaterCanyonWorldCarver;
+			});
 
-		event.getGeneration().getCarvers(GenerationStage.Carving.AIR).add(() -> configuredWorleyCarver);
+			event.getGeneration().getCarvers(GenerationStage.Carving.AIR).add(() -> configuredWorleyCarver);
 //				b.getCarvers(GenerationStage.Carving.LIQUID).add(configuredWorleyCarver); //There is no underwater carver for Worley's
 
 	}
