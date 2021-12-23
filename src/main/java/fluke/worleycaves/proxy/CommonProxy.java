@@ -1,27 +1,31 @@
 package fluke.worleycaves.proxy;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.function.Consumer;
-
 import fluke.worleycaves.config.ConfigHelper;
 import fluke.worleycaves.config.ConfigHolder;
+import fluke.worleycaves.util.Reference;
 import fluke.worleycaves.world.WorldCarverWorley;
-import net.minecraft.client.Minecraft;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.WorldGenRegistries;
 import net.minecraft.world.DimensionType;
+import net.minecraft.world.IServerWorld;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.GenerationStage;
 import net.minecraft.world.gen.carver.CaveWorldCarver;
 import net.minecraft.world.gen.carver.ConfiguredCarver;
 import net.minecraft.world.gen.carver.UnderwaterCaveWorldCarver;
+import net.minecraft.world.gen.carver.WorldCarver;
 import net.minecraft.world.gen.feature.ProbabilityConfig;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.event.world.BiomeLoadingEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.ForgeRegistries;
+
+import java.util.List;
+import java.util.function.Supplier;
 
 public class CommonProxy
 {
@@ -36,61 +40,45 @@ public class CommonProxy
 		IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
 
-		worleyCarver = new WorldCarverWorley(ProbabilityConfig.field_236576_b_, 256);
-		configuredWorleyCarver = Biome.createCarver(worleyCarver, new ProbabilityConfig(1));
-		
 		registerListeners(fmlBus, forgeBus);
+	}
+
+	public void registerCarvers(RegistryEvent.Register<WorldCarver<?>> event) {
+		final WorldCarverWorley value = new WorldCarverWorley(ProbabilityConfig.CODEC, 256);
+		event.getRegistry().register(value.setRegistryName(new ResourceLocation(Reference.MOD_ID, "worley_cave")));
+		worleyCarver = value;
+		configuredWorleyCarver = Registry.register(WorldGenRegistries.CONFIGURED_CARVER, new ResourceLocation(Reference.MOD_ID, "worley_cave"), worleyCarver.configured(new ProbabilityConfig(1)));
 	}
 	
 	public void registerListeners(IEventBus fmlBus, IEventBus forgeBus) 
 	{
 		fmlBus.addListener(this::configChanged);
-        fmlBus.addListener(this::commonSetup);
 
+        forgeBus.addListener(this::biomeSetup);
         forgeBus.addListener(this::worldLoad);
         forgeBus.addListener(this::worldCreateSpawn);
         forgeBus.addListener(this::worldUnload);
-    }
+		fmlBus.addGenericListener(WorldCarver.class, this::registerCarvers);
+	}
 	
-	public void commonSetup(FMLCommonSetupEvent event)
+	public void biomeSetup(BiomeLoadingEvent event)
 	{
-		ForgeRegistries.BIOMES.forEach(new Consumer<Biome>()
-		{
-			@Override
-			public void accept(Biome b)
-			{
-				// Exclude Nether and End biomes
-				if (b.getCategory() == Biome.Category.NETHER || b.getCategory() == Biome.Category.THEEND || b.getCategory() == Biome.Category.NONE)
-					return;
-				
-				//Remove vanilla cave carver
-				List<ConfiguredCarver<?>> carversAir = b.getCarvers(GenerationStage.Carving.AIR);
-				Iterator<ConfiguredCarver<?>> iteratorCarversAir = carversAir.iterator();
-				while(iteratorCarversAir.hasNext())
-				{
-					ConfiguredCarver<?> carver = iteratorCarversAir.next();
-					if(carver.carver instanceof CaveWorldCarver)
-					{
-						iteratorCarversAir.remove();
-					}
-				}
-				
-				//Remove vanilla underwater cave carver
-				List<ConfiguredCarver<?>> carversLiquid = b.getCarvers(GenerationStage.Carving.LIQUID);
-				Iterator<ConfiguredCarver<?>> iteratorCarversLiquid = carversLiquid.iterator();
-				while(iteratorCarversLiquid.hasNext())
-				{
-					ConfiguredCarver<?> carver = iteratorCarversLiquid.next();
-					if(carver.carver instanceof UnderwaterCaveWorldCarver)
-					{
-						iteratorCarversLiquid.remove();
-					}
-				}
-				
-				b.getCarvers(GenerationStage.Carving.AIR).add(configuredWorleyCarver);
+
+			// Exclude Nether and End biomes
+			if (event.getCategory() == Biome.Category.NETHER || event.getCategory() == Biome.Category.THEEND || event.getCategory() == Biome.Category.NONE)
+				return;
+
+			//Remove vanilla cave carver
+			List<Supplier<ConfiguredCarver<?>>> carversAir = event.getGeneration().getCarvers(GenerationStage.Carving.AIR);
+			carversAir.removeIf(carver -> carver.get().worldCarver instanceof CaveWorldCarver);
+
+			//Remove vanilla underwater cave carver
+			List<Supplier<ConfiguredCarver<?>>> carversLiquid = event.getGeneration().getCarvers(GenerationStage.Carving.LIQUID);
+			carversLiquid.removeIf(carver -> carver.get().worldCarver instanceof UnderwaterCaveWorldCarver);
+
+		event.getGeneration().getCarvers(GenerationStage.Carving.AIR).add(() -> configuredWorleyCarver);
 //				b.getCarvers(GenerationStage.Carving.LIQUID).add(configuredWorleyCarver); //There is no underwater carver for Worley's
-			}
-		});
+
 	}
 	
 	public void configChanged(ModConfig.ModConfigEvent event)
@@ -119,7 +107,7 @@ public class CommonProxy
 	public void worldUnload(WorldEvent.Unload event) 
 	{
 		//if player quits world make sure we reset seed
-		DimensionType dimension = event.getWorld().getWorld().func_230315_m_();
+		DimensionType dimension = event.getWorld().dimensionType();
 		if(dimension.hasSkyLight())
 		{
 			seedsSet = false;
@@ -131,12 +119,12 @@ public class CommonProxy
 	{
 		if(seedsSet)
 			return;
-		if(event.getWorld().isRemote())
+		if(event.getWorld().isClientSide())
 			return;
 		
 		// There's probably a better (and prettier) way to get the seed.
 		// So far, this is the only way that I've found out.
-		long seed = event.getWorld().getWorld().getServer().func_240793_aU_().func_230418_z_().func_236221_b_();
+		long seed = ((IServerWorld)event.getWorld()).getLevel().getSeed();
 		if(seed != 0) 
 		{
 			worldSeed = seed;

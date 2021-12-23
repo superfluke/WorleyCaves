@@ -1,13 +1,7 @@
 package fluke.worleycaves.world;
 
-import java.util.BitSet;
-import java.util.Random;
-import java.util.function.Function;
-
 import com.google.common.base.MoreObjects;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.Dynamic;
-
 import fluke.worleycaves.config.WorleyConfig;
 import fluke.worleycaves.util.BlockUtil;
 import fluke.worleycaves.util.FastNoise;
@@ -19,12 +13,14 @@ import net.minecraft.block.material.Material;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.chunk.IChunk;
-import net.minecraft.world.gen.carver.ICarverConfig;
 import net.minecraft.world.gen.carver.WorldCarver;
 import net.minecraft.world.gen.feature.ProbabilityConfig;
 import net.minecraftforge.fluids.IFluidBlock;
+
+import java.util.BitSet;
+import java.util.Random;
+import java.util.function.Function;
 
 public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 {
@@ -37,11 +33,11 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	private WorleyUtil worleyF1divF3;
 	private FastNoise displacementNoisePerlin;
 
-	private static final BlockState AIR = Blocks.AIR.getDefaultState();
-	private static final BlockState SAND = Blocks.SAND.getDefaultState();
-	private static final BlockState RED_SAND = Blocks.RED_SAND.getDefaultState();
-	private static final BlockState SANDSTONE = Blocks.SANDSTONE.getDefaultState();
-	private static final BlockState RED_SANDSTONE = Blocks.RED_SANDSTONE.getDefaultState();
+	private static final BlockState AIR = Blocks.AIR.defaultBlockState();
+	private static final BlockState SAND = Blocks.SAND.defaultBlockState();
+	private static final BlockState RED_SAND = Blocks.RED_SAND.defaultBlockState();
+	private static final BlockState SANDSTONE = Blocks.SANDSTONE.defaultBlockState();
+	private static final BlockState RED_SANDSTONE = Blocks.RED_SANDSTONE.defaultBlockState();
 	private static BlockState lavaBlock;
 	private static int maxCaveHeight;
 	private static int minCaveHeight;
@@ -68,12 +64,12 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		// warpAmplifier = 8.0F;
 		// easeInDepth = 15;
 	}
-	
+
 	public void init(long worldSeed)
 	{
 		worleyF1divF3 = new WorleyUtil((int) worldSeed);
 		worleyF1divF3.SetFrequency(0.016f);
-		
+
 		displacementNoisePerlin = new FastNoise((int) worldSeed);
 		displacementNoisePerlin.SetNoiseType(FastNoise.NoiseType.Perlin);
 		displacementNoisePerlin.SetFrequency(0.05f);
@@ -87,17 +83,13 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		xzCompression = (float)WorleyConfig.horizonalCompressionMultiplier;
 		surfaceCutoff = (float)WorleyConfig.surfaceCutoffValue;
 		lavaDepth = WorleyConfig.lavaDepth;
-		
-		lavaBlock = BlockUtil.getStateFromString(WorleyConfig.lavaBlock, Blocks.LAVA.getDefaultState());
+
+		lavaBlock = BlockUtil.getStateFromString(WorleyConfig.lavaBlock, Blocks.LAVA.defaultBlockState());
 
 	}
-	
+
+
 	@Override
-	public boolean func_225555_a_(IChunk chunkIn, Function<BlockPos, Biome> getBiomeFunction, Random rand, int seaLevel, int chunkXOffset, int chunkZOffset, int chunkX, int chunkZ, BitSet carvingMask, ProbabilityConfig config)
-	{
-		return carve(chunkIn, getBiomeFunction, rand, seaLevel, chunkX, chunkZ, chunkXOffset, chunkZOffset, carvingMask, config);
-	}
-
 	public boolean carve(IChunk chunkIn, Function<BlockPos, Biome> getBiomeFunction, Random rand, int seaLevel, int chunkX, int chunkZ, int chunkXOffset, int chunkZOffset, BitSet carvingMask, ProbabilityConfig config)
 	{
 		if (chunkXOffset != chunkX || chunkZOffset != chunkZ)
@@ -150,11 +142,11 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 			for (int z = 0; z < 4; z++)
 			{
 				int depth = 0;
-				
+
 				//don't bother checking all the other logic if there's nothing to dig in this column
 				if(samples[x][HAS_CAVES_FLAG][z] == 0 && samples[x+1][HAS_CAVES_FLAG][z] == 0 && samples[x][HAS_CAVES_FLAG][z+1] == 0 && samples[x+1][HAS_CAVES_FLAG][z+1] == 0)
 					continue;
-				
+
 				// each chunk divided into 128 subchunks along Y axis. Need lots of y sample points to not break things
 				for (int y = (maxCaveHeight / 2) - 1; y >= 0; y--)
 				{
@@ -249,7 +241,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 
 								if (noiseVal > adjustedNoiseCutoff)
 								{
-									BlockState aboveBlock = (BlockState) MoreObjects.firstNonNull(chunk.getBlockState(new BlockPos(localX, localY + 1, localZ)), Blocks.AIR.getDefaultState());
+									BlockState aboveBlock = (BlockState) MoreObjects.firstNonNull(chunk.getBlockState(new BlockPos(localX, localY + 1, localZ)), Blocks.AIR.defaultBlockState());
 									if (!isFluidBlock(aboveBlock) || localY <= lavaDepth)
 									{
 										// if we are in the easeInDepth range or near sea level, do some extra checks for water before digging
@@ -268,12 +260,12 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 												if (isFluidBlock(chunk.getBlockState(new BlockPos(localX, localY, localZ - 1))))
 													continue;
 										}
-										
+
 										if(currentBlock == null)
 											currentBlock = chunk.getBlockState(localPos);
 										if(currentBiome == null)
 											currentBiome = getBiomeFunction.apply(realPos);
-										
+
 										boolean foundTopBlock = isTopBlock(chunk, currentBiome, currentBlock);
 										digBlock(chunk, currentBiome, localPos, foundTopBlock, currentBlock, aboveBlock);
 									}
@@ -307,7 +299,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 			for (int z = 0; z < 5; z++)
 			{
 				int realZ = z * 4 + chunkZ * 16;
-				boolean columnHasCaveFlag = false; 
+				boolean columnHasCaveFlag = false;
 
 				// loop from top down for y values so we can adjust noise above current y later on
 				for (int y = 128; y >= 0; y--)
@@ -326,7 +318,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 						float yDisp = 0f;
 						float zDisp = 0f;
 
-						xDisp = displacementNoisePerlin.GetNoise(realX, realZ)*dispAmp; 
+						xDisp = displacementNoisePerlin.GetNoise(realX, realZ)*dispAmp;
 						yDisp = displacementNoisePerlin.GetNoise(realX, realZ+67.0f)*dispAmp;
 						zDisp = displacementNoisePerlin.GetNoise(realX, realZ+149.0f)*dispAmp;
 
@@ -415,7 +407,7 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 		//Biome biome = getBiomeFunction.apply(blockPos);
 //		Biome biome = chunk.getBiome(blockPos);
 		BlockState blockState = chunk.getBlockState(blockPos);
-		return blockState == biome.getSurfaceBuilderConfig().getTop() || blockState == biome.getSurfaceBuilderConfig().getUnder();
+		return blockState == biome.getGenerationSettings().getSurfaceBuilderConfig().getTopMaterial() || blockState == biome.getGenerationSettings().getSurfaceBuilderConfig().getTopMaterial();
 	}
 
 	// returns true if block is fluid, trying to play nice with modded liquid
@@ -430,36 +422,37 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	private boolean isTopBlock(IChunk chunk, Biome biome, BlockState state)
 	{
 		return (isExceptionBiome(biome) ? state.getBlock() == Blocks.GRASS
-				: state == biome.getSurfaceBuilderConfig().getTop());
+				: state == biome.getGenerationSettings().getSurfaceBuilderConfig().getTopMaterial());
 	}
 
 	// Exception biomes to make sure we generate like vanilla
 	private boolean isExceptionBiome(Biome biome)
 	{
-		if (biome == Biomes.BEACH)
-			return true;
-		if (biome == Biomes.DESERT)
-			return true;
-		return false;
+		return biome.getBiomeCategory() == Biome.Category.BEACH || biome.getBiomeCategory() == Biome.Category.DESERT;
 	}
 
 	@Override
-	public boolean shouldCarve(Random rand, int chunkX, int chunkZ, ProbabilityConfig config)
+	public boolean isStartChunk(Random rand, int chunkX, int chunkZ, ProbabilityConfig config)
 	{
 		return true;
 	}
 
 	@Override
-	protected boolean func_222708_a(double p_222708_1_, double p_222708_3_, double p_222708_5_, int p_222708_7_)
+	protected boolean skip(double p_222708_1_, double p_222708_3_, double p_222708_5_, int p_222708_7_)
 	{
 		return false;
 	}
 
-	private boolean canReplaceBlock(BlockState state, BlockState stateUp)
+
+
+
+
+	protected boolean canReplaceBlock(BlockState state, BlockState stateUp)
 	{
 		// Replace anything that's made of rock which should hopefully work for most modded type stones (and maybe not break everything)
-		return state.getMaterial() == Material.ROCK || super.canCarveBlock(state, stateUp);
+		return state.getMaterial() == Material.STONE || super.canReplaceBlock(state, stateUp);
 	}
+
 
 	/**
 	 * Digs out the current block, default implementation removes stone, filler, and
@@ -479,8 +472,8 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 	 */
 	private void digBlock(IChunk chunk, Biome biome, BlockPos blockPos, boolean foundTop, BlockState state, BlockState blockStateUp)
 	{
-		BlockState top = biome.getSurfaceBuilderConfig().getTop();
-		BlockState filler = biome.getSurfaceBuilderConfig().getUnder();
+		BlockState top = biome.getGenerationSettings().getSurfaceBuilderConfig().getTopMaterial();
+		BlockState filler = biome.getGenerationSettings().getSurfaceBuilderConfig().getUnderMaterial();
 
 		if (this.canReplaceBlock(state, blockStateUp) || state.getBlock() == top.getBlock() || state.getBlock() == filler.getBlock())
 		{
@@ -491,18 +484,18 @@ public class WorldCarverWorley extends WorldCarver<ProbabilityConfig>
 			{
 				chunk.setBlockState(blockPos, AIR, false);
 
-				if (foundTop && chunk.getBlockState(blockPos.down()).getBlock() == filler.getBlock())
+				if (foundTop && chunk.getBlockState(blockPos.below()).getBlock() == filler.getBlock())
 				{
-					chunk.setBlockState(blockPos.down(), top, false);
+					chunk.setBlockState(blockPos.below(), top, false);
 				}
 
 				// replace floating sand with sandstone
 				if (blockStateUp == SAND)
 				{
-					chunk.setBlockState(blockPos.up(), SANDSTONE, false);
+					chunk.setBlockState(blockPos.above(), SANDSTONE, false);
 				} else if (blockStateUp == RED_SAND)
 				{
-					chunk.setBlockState(blockPos.up(), RED_SANDSTONE, false);
+					chunk.setBlockState(blockPos.above(), RED_SANDSTONE, false);
 				}
 			}
 		}

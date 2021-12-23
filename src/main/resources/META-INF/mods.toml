@@ -3,9 +3,11 @@ loaderVersion="[32,)"
 
 issueTrackerURL="https://github.com/superfluke/WorleyCaves/issues"
 
+license="MIT"
+
 [[mods]]
 	modId="worleycaves"
-	version="1.16.1-1.6.2"
+	version="1.16.5-1.6.2"
 	displayName="Worley's Caves"
 	displayURL="https://www.curseforge.com/minecraft/mc-mods/worleys-caves"
 	credits=""
@@ -24,6 +26,6 @@ issueTrackerURL="https://github.com/superfluke/WorleyCaves/issues"
 [[dependencies.worleycaves]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16.1]"
+    versionRange="[1.16.2,)"
     ordering="NONE"
     side="BOTH"

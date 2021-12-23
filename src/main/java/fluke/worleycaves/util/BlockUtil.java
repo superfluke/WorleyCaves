@@ -12,7 +12,7 @@ public class BlockUtil
 	{
 		BlockState blocky;
 
-		blocky = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(block)).getDefaultState();
+		blocky = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(block)).defaultBlockState();
 		
 		if(blocky == null)
 		{
